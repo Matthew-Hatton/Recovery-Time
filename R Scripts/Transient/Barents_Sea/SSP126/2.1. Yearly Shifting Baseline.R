@@ -142,7 +142,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
     ungroup() %>% 
     arrange(Month)                                                            # Order by month to match template
   
-  My_volumes <- readRDS("./Objects/TS.rds") %>% 
+  My_volumes <- readRDS("../Objects/TS.rds") %>% 
     filter(Year == transient_years[i]) %>%                                     # Limit to reference period
     group_by(Compartment, Month) %>%                                          # By compartment and month
     summarise(across(c(NO3_avg,NH4_avg,Diatoms_avg,Other_phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
