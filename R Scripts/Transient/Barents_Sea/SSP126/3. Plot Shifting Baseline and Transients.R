@@ -98,8 +98,8 @@ biomass_smooth_guilds <- final_changing_smooth %>% filter(Guild %in% useful)
 # Our recovery time is the time it takes for the 1x fishing line to reach the black line
 # so, let's just use the one fishing rate (1x) and calculate that value
 
-biomass_guilds_1x <- biomass_guilds %>% filter(FishingRate == 1)
-biomass_guilds_1x_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 1)
+biomass_guilds_1x <- biomass_guilds %>% filter(FishingRate == 0)
+biomass_guilds_1x_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0)
 ggplot() +
   geom_line(data = all_biomasses,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.8) +
   geom_line(data = all_biomasses_yearly,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.2) +
@@ -111,7 +111,7 @@ ggplot() +
   theme(legend.position = "top") +
   facet_wrap(~ Guild,scales = "free_y") +
   NULL
-ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_1x.png",
+ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_0x.png",
        height = 1080,
        width = 1920,
        units = "px",

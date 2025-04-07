@@ -6,7 +6,7 @@
 rm(list=ls())                                                                                              # Wipe the brain
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc")    # List packages
 lapply(Packages, library, character.only = TRUE)   
-source("../Objects/@_Region_file_BS.R")
+source("../@_Region_file_BS.R")
 
 plan(multisession)
 
@@ -24,11 +24,11 @@ transient_years <- seq(2010,2061) # How far do we want to compute?
 model <- e2ep_read(model.name = "Barents_Sea",
                    model.variant = "2011-2019")
 # Set fishing to 0 (the real baseline)
-model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]]))
+#model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]]))
 
 Boundary_template <- model[["data"]][["chemistry.drivers"]]                                    
 
-My_scale <- readRDS("./Objects/Domains BS.rds") %>%                            # Calculate the volume of the three zones
+My_scale <- readRDS("../Objects/Domain_BS.rds") %>%                            # Calculate the volume of the three zones
   sf::st_drop_geometry() %>% 
   mutate(S = c(T, T),
          D = c(F, T)) %>% 
@@ -38,7 +38,7 @@ My_scale <- readRDS("./Objects/Domains BS.rds") %>%                            #
   mutate(Volume = area * abs(Elevation)) %>% 
   dplyr::select(Shore, slab_layer, Volume)
 
-My_Waves <- readRDS("./Objects/Significant wave height BS.rds") %>%  #*2000 - 2010   
+My_Waves <- readRDS("../Objects/Significant wave height BS.rds") %>%  #*2000 - 2010   
   arrange(month) %>% 
   group_by(month) %>% 
   summarise(mean_height = mean(mean_height))# Arrange to match template
@@ -221,4 +221,4 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
   cat("\rFinished", i, "of", length(transient_years[1:41]),"\n")
 }
 
-saveRDS(master,"../Objects/Shifting_Baseline_Decadal_0_fishing.RDS")
+saveRDS(master,"../Objects/Shifting_Baseline_Decadal_1_fishing.RDS")
