@@ -4,7 +4,7 @@
 rm(list=ls())                                                                                              # Wipe the brain
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc")                     # List packages
 lapply(Packages, library, character.only = TRUE)   
-source("./Objects/@_Region file.R")
+source("../Objects/@_Region_file_BS.R")
 
 plan(multisession)
 
@@ -21,14 +21,9 @@ transient_years <- seq(2010,2061) # How far do we want to compute?
 #### LOAD MODEL AND EXAMPLE FILES ####
 model <- e2ep_read(model.name = "Barents_Sea",
                    model.variant = "2011-2019")
-print("Calculating Initial State...")
-all_guild_biomass <- readRDS("./Objects/Barents_Sea initial biomass.RDS")
-
-B_initial <- all_guild_biomass$Model_annual_mean[27] # Get initial Biomass DF
-
 Boundary_template <- model[["data"]][["chemistry.drivers"]]                                    
 
-My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Calculate the volume of the three zones
+My_scale <- readRDS("./Objects/Domains_BS.rds") %>%                          # Calculate the volume of the three zones
   sf::st_drop_geometry() %>% 
   mutate(S = c(T, T),
          D = c(F, T)) %>% 
@@ -38,13 +33,13 @@ My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Ca
   mutate(Volume = area * abs(Elevation)) %>% 
   dplyr::select(Shore, slab_layer, Volume)
 
-My_Waves <- readRDS("./Objects/Significant wave height.rds") %>%  #*2000 - 2010   
+My_Waves <- readRDS("../Objects/Significant wave height BS.rds") %>%  #*2000 - 2010   
   arrange(month) %>% 
   group_by(month) %>% 
   summarise(mean_height = mean(mean_height))# Arrange to match template
 
-NH4_boundary <- readRDS("./Objects/NH4 River Concentrations.RDS")                                          # Read in NH4
-NO3_boundary <- readRDS("./Objects/NO3 River Concentrations.RDS")                                          # Read in NO3
+NH4_boundary <- readRDS("../Objects/NH4 River Concentrations BS.RDS")                                          # Read in NH4
+NO3_boundary <- readRDS("../Objects/NO3 River Concentrations BS.RDS")                                          # Read in NO3
 
 #### Crashing the system ####
 
@@ -65,7 +60,7 @@ e2ep_transient <- function(x) {
   #### Iterate over different time periods ####
   for (i in 1:length(transient_years[1:41])) {
     #### Chemistry ####
-    My_boundary_data <- readRDS("./Objects/Boundary measurements.rds") %>%                                     # Import data
+    My_boundary_data <- readRDS("../Objects/Boundary measurements.rds") %>%                                     # Import data
       pivot_longer(
         cols = starts_with("D_") | starts_with("SO_") | starts_with("SI_"),       # Pivot relevant columns
         names_to = "Temp",                                                            # Temporary column to hold original names
@@ -93,7 +88,7 @@ e2ep_transient <- function(x) {
       ) %>%
       pivot_wider(names_from = c(Compartment, Variable), names_sep = "_", values_from = Measured) # Spread columns to match template
     
-    My_atmosphere <- readRDS(stringr::str_glue("./Objects/Atmospheric N deposition.rds")) %>%
+    My_atmosphere <- readRDS(stringr::str_glue("../Objects/Atmospheric N deposition.rds")) %>%
       filter(Year %in% (transient_years[seq(i,i+10)])) %>%     
       group_by(Month, Oxidation_state, Shore,  Year) %>%
       summarise(Measured = sum(Measured, na.rm = T)) %>%                                              # Sum across deposition states
@@ -131,7 +126,7 @@ e2ep_transient <- function(x) {
     
     
     #### Physics ####
-    My_light <- readRDS("./Objects/light.rds") %>% 
+    My_light <- readRDS("../Objects/light.rds") %>% 
       filter(Forcing == Force & Year == ifelse(transient_years[i] <= 2019,transient_years[i],2019)) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
       filter(SSP %in% c("hist","ssp370")) %>% 
       group_by(Month,SSP,Forcing) %>%  # Average across months
@@ -139,7 +134,7 @@ e2ep_transient <- function(x) {
       ungroup() %>% 
       arrange(Month)                                                            # Order to match template
     
-    My_H_Flows <- readRDS("./Objects/H-Flows.rds") %>% 
+    My_H_Flows <- readRDS("../Objects/H-Flows.rds") %>% 
       filter(Year %in% transient_years[seq(i,i+10)]) %>%                                     # Limit to reference period
       filter(SSP %in% c(ssp)) %>% 
       group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
@@ -151,7 +146,7 @@ e2ep_transient <- function(x) {
       arrange(Month) %>%                                                             # Order by month to match template
       filter(Forcing == Force)
     
-    My_V_Flows <- readRDS("./Objects/vertical diffusivity.rds") %>%
+    My_V_Flows <- readRDS("../Objects/vertical diffusivity.rds") %>%
       filter(Year %in% transient_years[seq(i,i+10)]) %>%                                     # Limit to reference period
       filter(SSP %in% c(ssp)) %>% 
       group_by(Month) %>% 
@@ -159,14 +154,14 @@ e2ep_transient <- function(x) {
       ungroup() %>% 
       arrange(Month)                                                            # Order by month to match template
     
-    My_volumes <- readRDS("./Objects/TS.rds") %>% 
+    My_volumes <- readRDS("../Objects/TS.rds") %>% 
       filter(Year %in% transient_years[seq(i,i+10)]) %>%                                     # Limit to reference period
       group_by(Compartment, Month) %>%                                          # By compartment and month
       summarise(across(c(NO3_avg,NH4_avg,Diatoms_avg,Other_phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
       ungroup() %>% 
       arrange(Month)                                                            # Order by month to match template
     
-    My_ice <- readRDS("./Objects/Ice_Summary_TEST.rds") %>% 
+    My_ice <- readRDS("../Objects/Ice_Summary_TEST.rds") %>% 
       filter(Shore %in% c("Inshore","Offshore")) %>%  # Remove Buffer Zone
       filter(Model == Force) %>%  # Access just one scenario
       filter(Year %in% transient_years[seq(i,i+10)]) %>%  # Filter down to just the target year
@@ -241,4 +236,4 @@ e2ep_transient <- function(x) {
 top_level <- future_map(c(0,1,2,3), e2ep_transient,.progress = F)
 toc()
 
-saveRDS(top_level,"../Recovery Time Manuscript/Objects/biomass_transients_smoothed_climate.RDS")
+saveRDS(top_level,"../Objects/biomass_transients_smoothed_climate.RDS")
