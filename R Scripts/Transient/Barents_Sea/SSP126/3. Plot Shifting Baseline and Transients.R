@@ -99,7 +99,7 @@ biomass_smooth_guilds <- final_changing_smooth %>% filter(Guild %in% useful)
 # so, let's just use the one fishing rate (1x) and calculate that value
 
 biomass_guilds_1x <- biomass_guilds %>% filter(FishingRate == 0)
-biomass_guilds_1x_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0)
+biomass_guilds_1x_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0) #actually take 0x fishing here
 ggplot() +
   geom_line(data = all_biomasses,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.8) +
   geom_line(data = all_biomasses_yearly,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.2) +
@@ -110,6 +110,10 @@ ggplot() +
        color = "Fishing Reintroduction Rate\n (DFHR and PFHR)") +
   theme(legend.position = "top") +
   facet_wrap(~ Guild,scales = "free_y") +
+  labs(title = "Crash system, regrow with 0x fishing",
+       caption = "Dark red: Decadal Climate Smooth of Crashed Biomass. Faint red: Yearly Crashed Biomass \n
+       Black: Decadal Climate Smooth of Biomass without Crash. Faint Black: Yearly Biomass Without Crash") +
+  theme(plot.caption = element_text(size = 6)) +
   NULL
 ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_0x.png",
        height = 1080,
