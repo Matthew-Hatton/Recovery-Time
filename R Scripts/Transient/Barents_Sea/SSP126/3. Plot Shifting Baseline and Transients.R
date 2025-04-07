@@ -8,12 +8,6 @@ biomasses <- all_data[["Biomasses"]]
 all_data_yearly <- readRDS("../Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
 biomasses_yearly <- all_data_yearly[["Biomasses"]]
 
-
-####
-
-
-
-## Now the goal is to make the above plot for all guilds to facet them
 useful <- c("Omnivorous_zooplankton",
             "Carnivorous_zooplankton",
             "Planktivorous_fish",
@@ -101,23 +95,6 @@ for (i in 1:length(top_level[[1]][["Biomasses"]])) {
 
 biomass_guilds <- final_changing %>% filter(Guild %in% useful)
 biomass_smooth_guilds <- final_changing_smooth %>% filter(Guild %in% useful)
-
-ggplot() +
-  geom_line(data = all_biomasses,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.8) +
-  geom_line(data = biomass_guilds,aes(x = as.numeric(Year),y = Biomass,color = as.character(FishingRate),group = FishingRate)) +
-  labs(x = "Year",
-       y = "Guild Biomass",
-       color = "Fishing Reintroduction Rate\n (DFHR and PFHR)") +
-  theme(legend.position = "top") +
-  facet_wrap(~ Guild,scales = "free_y") +
-  NULL
-ggsave("../Figures/Preliminary/all_guilds_shifting_baseline.png",
-       height = 1080,
-       width = 1920,
-       units = "px",
-       dpi = 200)
-
-
 # Our recovery time is the time it takes for the 1x fishing line to reach the black line
 # so, let's just use the one fishing rate (1x) and calculate that value
 
@@ -140,45 +117,4 @@ ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_1x.png",
        units = "px",
        dpi = 200)
 
-## We can also add on the yearly data in a faint colour. We need to load it first
-all_data_yearly <- readRDS("../Objects/Shifting_Baseline_Yearly.RDS")
-
-
-biomasses_yearly <- all_data_yearly[["Biomasses"]]
-all_biomasses_yearly <- data.frame(Model_annual_mean = NA,
-                            Units = NA,
-                            Description = NA,
-                            Year = NA)
-for (i in 1:length(biomasses_yearly)) {
-  tmp <- data.frame(Model_annual_mean = NA,
-                    Units = NA,
-                    Description = NA)
-  tmp_join <- rbind(tmp,biomasses_yearly[[i]])
-  tmp_join$Year <- transient_years[i]
-  all_biomasses_yearly <- rbind(all_biomasses_yearly,tmp_join)
-}
-names(all_biomasses_yearly)[3] <- "Guild"
-all_biomasses_yearly <- all_biomasses_yearly %>% filter(Guild %in% useful)
-
-window_size <- 11
-
-# Compute the sliding window average
-biomass_guilds_1x <- biomass_guilds_1x %>%
-  group_by(Guild) %>%
-  mutate(SlidingWindowAvg = rollapply(Biomass, width = window_size, FUN = mean, align = 'left', fill = NA, na.rm = TRUE)) %>%
-  ungroup()
-
-
-## Also can add the smoothed line which has the experiment (red line)
-ggplot() +
-  geom_line(data = all_biomasses,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 1) + # smoothed baseline
-  geom_line(data = all_biomasses_yearly,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.2) + # yealy baseline
-  geom_line(data = biomass_guilds_1x,aes(x = as.numeric(Year),y = Biomass),color = "red",alpha = 0.2) + # yearly crashed biomass
-  geom_line(data = biomass_guilds_1x,aes(x = as.numeric(Year),y = SlidingWindowAvg),color = "red",alpha = 1,se = F,linewidth = 0.4) + # smoothed crashed biomass
-  labs(x = "Year",
-       y = "Guild Biomass",
-       color = "Fishing Reintroduction Rate\n (DFHR and PFHR)") +
-  theme(legend.position = "top") +
-  facet_wrap(~ Guild,scales = "free_y") +
-  NULL
 
