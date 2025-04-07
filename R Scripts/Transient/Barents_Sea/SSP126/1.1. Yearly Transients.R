@@ -59,17 +59,6 @@ e2ep_transient <- function(x) {
   #pb <- txtProgressBar(min = 0, max = length(transient_years), style = 3)
   #### Iterate over different time periods ####
   for (i in 1:length(transient_years)) {
-    ### Fishing #### 
-    # if (transient_years[i] == 2025) {
-    #   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- 10 # Turn off Fishing
-    # }
-    # if (transient_years[i] == 2040) {
-    #   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- 25 # Turn off Fishing
-    # }
-    # if (transient_years[i] == 2050) {
-    #   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- 50 # Turn off Fishing
-    # }
-    
   #### Chemistry ####
     My_boundary_data <- readRDS("../Objects/Boundary measurements.rds") %>%                                     # Import data
       pivot_longer(
