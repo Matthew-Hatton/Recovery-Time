@@ -6,7 +6,7 @@
 rm(list=ls())                                                                                              # Wipe the brain
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc")    # List packages
 lapply(Packages, library, character.only = TRUE)   
-source("./Objects/@_Region file.R")
+source("../Objects/@_Region_file_BS.R")
 
 plan(multisession)
 
@@ -24,14 +24,10 @@ transient_years <- seq(2010,2061) # How far do we want to compute?
 model <- e2ep_read(model.name = "Barents_Sea",
                    model.variant = "2011-2019")
 model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Turn off all fishing
-print("Calculating Initial State...")
-# all_guild_biomass <- readRDS("./Objects/Barents_Sea initial biomass.RDS")
-# 
-# B_initial <- all_guild_biomass$Model_annual_mean[27] # Get initial Biomass DF
 
 Boundary_template <- model[["data"]][["chemistry.drivers"]]                                    
 
-My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Calculate the volume of the three zones
+My_scale <- readRDS("../Objects/Domains_BS.rds") %>%                          # Calculate the volume of the three zones
   sf::st_drop_geometry() %>% 
   mutate(S = c(T, T),
          D = c(F, T)) %>% 
@@ -41,18 +37,18 @@ My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Ca
   mutate(Volume = area * abs(Elevation)) %>% 
   dplyr::select(Shore, slab_layer, Volume)
 
-My_Waves <- readRDS("./Objects/Significant wave height.rds") %>%  #*2000 - 2010   
+My_Waves <- readRDS("../Objects/Significant wave height BS.rds") %>%  #*2000 - 2010     #*2000 - 2010   
   arrange(month) %>% 
   group_by(month) %>% 
   summarise(mean_height = mean(mean_height))# Arrange to match template
 
-NH4_boundary <- readRDS("./Objects/NH4 River Concentrations.RDS")                                          # Read in NH4
-NO3_boundary <- readRDS("./Objects/NO3 River Concentrations.RDS")                                          # Read in NO3
+NH4_boundary <- readRDS("../Objects/NH4 River Concentrations BS.RDS")                                          # Read in NH4
+NO3_boundary <- readRDS("../Objects/NO3 River Concentrations BS.RDS")                                          # Read in NO3
 
 
 for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cuts at 2050. To compute that decadal average we don't want to run out of data
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
-  My_boundary_data <- readRDS("./Objects/Boundary measurements.rds") %>%                                     # Import data
+  My_boundary_data <- readRDS("../Objects/Boundary measurements.rds") %>%                                     # Import data
     pivot_longer(
       cols = starts_with("D_") | starts_with("SO_") | starts_with("SI_"),       # Pivot relevant columns
       names_to = "Temp",                                                            # Temporary column to hold original names
@@ -80,7 +76,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
     ) %>%
     pivot_wider(names_from = c(Compartment, Variable), names_sep = "_", values_from = Measured) # Spread columns to match template
   
-  My_atmosphere <- readRDS(stringr::str_glue("./Objects/Atmospheric N deposition.rds")) %>%
+  My_atmosphere <- readRDS(stringr::str_glue("../Objects/Atmospheric N deposition.rds")) %>%
     filter(Year == (transient_years[i])) %>%     
     group_by(Month, Oxidation_state, Shore,  Year) %>%
     summarise(Measured = sum(Measured, na.rm = T)) %>%                                              # Sum across deposition states
@@ -118,7 +114,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
   
   
   #### Physics ####
-  My_light <- readRDS("./Objects/light.rds") %>% 
+  My_light <- readRDS("../Objects/light.rds") %>% 
     filter(Forcing == Force & Year == ifelse(transient_years[i] <= 2019,transient_years[i],2019)) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
     filter(SSP %in% c("hist",ssp)) %>% 
     group_by(Month,SSP,Forcing) %>%  # Average across months
@@ -126,7 +122,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
     ungroup() %>% 
     arrange(Month)                                                            # Order to match template
   
-  My_H_Flows <- readRDS("./Objects/H-Flows.rds") %>% 
+  My_H_Flows <- readRDS("../Objects/H-Flows.rds") %>% 
     filter(Year == transient_years[i]) %>%                                     # Limit to reference period
     filter(SSP %in% c(ssp,"hist")) %>% 
     group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
@@ -138,7 +134,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
     arrange(Month) %>%                                                             # Order by month to match template
     filter(Forcing == Force)
   
-  My_V_Flows <- readRDS("./Objects/vertical diffusivity.rds") %>%
+  My_V_Flows <- readRDS("../Objects/vertical diffusivity.rds") %>%
     filter(Year == transient_years[i]) %>%                                     # Limit to reference period
     filter(SSP %in% c(ssp,"hist")) %>% 
     group_by(Month) %>% 
@@ -153,7 +149,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
     ungroup() %>% 
     arrange(Month)                                                            # Order by month to match template
   
-  My_ice <- readRDS("./Objects/Ice_Summary_TEST.rds") %>% 
+  My_ice <- readRDS("../Objects/Ice_Summary_TEST.rds") %>% 
     filter(Shore %in% c("Inshore","Offshore")) %>%  # Remove Buffer Zone
     filter(Model == Force) %>%  # Access just one scenario
     filter(Year == transient_years[i]) %>%  # Filter down to just the target year
@@ -224,4 +220,4 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
   cat("\rFinished", i, "of", length(transient_years[1:41]),"\n")
 }
 
-saveRDS(master,"../Recovery Time Manuscript/Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
+saveRDS(master,"../Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
