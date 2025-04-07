@@ -1,11 +1,11 @@
-#rm(list = ls())
+rm(list = ls())
 library(patchwork)
 library(tidyverse)
 
 transient_years <- seq(2010,2050)
-all_data <- readRDS("../Recovery Time Manuscript/Objects/Shifting_Baseline_Decadal_0_fishing.RDS")
+all_data <- readRDS("../Objects/Shifting_Baseline_Decadal_0_fishing.RDS")
 biomasses <- all_data[["Biomasses"]]
-all_data_yearly <- readRDS("../Recovery Time Manuscript/Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
+all_data_yearly <- readRDS("../Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
 biomasses_yearly <- all_data_yearly[["Biomasses"]]
 
 
@@ -57,8 +57,8 @@ all_biomasses <- all_biomasses %>% filter(Guild %in% useful)
 names(all_biomasses_yearly)[3] <- "Guild"
 all_biomasses_yearly <- all_biomasses_yearly %>% filter(Guild %in% useful)
 
-top_level <- readRDS("../Recovery Time Manuscript/Objects/biomass_transients.RDS")
-top_level_smooth <- readRDS("../Recovery Time Manuscript/Objects/biomass_transients_smoothed_climate.RDS")
+top_level <- readRDS("../Objects/biomass_transients.RDS")
+top_level_smooth <- readRDS("../Objects/biomass_transients_smoothed_climate.RDS")
 final_changing <- data.frame(FishingRate = NA,
                              Year = NA,
                              Biomass = NA,
@@ -111,7 +111,7 @@ ggplot() +
   theme(legend.position = "top") +
   facet_wrap(~ Guild,scales = "free_y") +
   NULL
-ggsave("../Recovery Time Manuscript/Figures/Preliminary/all_guilds_shifting_baseline.png",
+ggsave("../Figures/Preliminary/all_guilds_shifting_baseline.png",
        height = 1080,
        width = 1920,
        units = "px",
@@ -134,14 +134,14 @@ ggplot() +
   theme(legend.position = "top") +
   facet_wrap(~ Guild,scales = "free_y") +
   NULL
-ggsave("../Recovery Time Manuscript/Figures/Preliminary/all_guilds_shifting_baseline_1x.png",
+ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_1x.png",
        height = 1080,
        width = 1920,
        units = "px",
        dpi = 200)
 
 ## We can also add on the yearly data in a faint colour. We need to load it first
-all_data_yearly <- readRDS("../Recovery Time Manuscript/Objects/Shifting_Baseline_Yearly.RDS")
+all_data_yearly <- readRDS("../Objects/Shifting_Baseline_Yearly.RDS")
 
 
 biomasses_yearly <- all_data_yearly[["Biomasses"]]
