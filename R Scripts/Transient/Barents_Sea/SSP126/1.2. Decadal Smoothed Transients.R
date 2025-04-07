@@ -4,7 +4,7 @@
 rm(list=ls())                                                                                              # Wipe the brain
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc")                     # List packages
 lapply(Packages, library, character.only = TRUE)   
-source("../Objects/@_Region_file_BS.R")
+source("../@_Region_file_BS.R")
 
 plan(multisession)
 
@@ -23,7 +23,7 @@ model <- e2ep_read(model.name = "Barents_Sea",
                    model.variant = "2011-2019")
 Boundary_template <- model[["data"]][["chemistry.drivers"]]                                    
 
-My_scale <- readRDS("./Objects/Domains_BS.rds") %>%                          # Calculate the volume of the three zones
+My_scale <- readRDS("../Objects/Domain_BS.rds") %>%                          # Calculate the volume of the three zones
   sf::st_drop_geometry() %>% 
   mutate(S = c(T, T),
          D = c(F, T)) %>% 
@@ -54,9 +54,8 @@ e2ep_transient <- function(x) {
   model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                  csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
                                                                                                              csv.output = F)[,1]
-  B_X <- results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[27] # Get Crashed biomass
+  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(1,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]]))
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- x # reset fishing to value specified
-  #pb <- txtProgressBar(min = 0, max = length(transient_years), style = 3)
   #### Iterate over different time periods ####
   for (i in 1:length(transient_years[1:41])) {
     #### Chemistry ####

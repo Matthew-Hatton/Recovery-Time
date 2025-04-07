@@ -8,6 +8,11 @@ biomasses <- all_data[["Biomasses"]]
 all_data_yearly <- readRDS("../Objects/Shifting_Baseline_Yearly_0_fishing.RDS")
 biomasses_yearly <- all_data_yearly[["Biomasses"]]
 
+all_data_1x <- readRDS("../Objects/Shifting_Baseline_Decadal_1_fishing.RDS")
+biomasses_1x <- all_data_1x[["Biomasses"]]
+all_data_yearly_1x <- readRDS("../Objects/Shifting_Baseline_Yearly_1_fishing.RDS")
+biomasses_yearly_1x <- all_data_yearly_1x[["Biomasses"]]
+
 useful <- c("Omnivorous_zooplankton",
             "Carnivorous_zooplankton",
             "Planktivorous_fish",
@@ -45,11 +50,43 @@ for (i in 1:length(biomasses_yearly)) {
   all_biomasses_yearly <- rbind(all_biomasses_yearly,tmp_join)
 }
 
+all_biomasses_yearly_1x <- data.frame(Model_annual_mean = NA,
+                                   Units = NA,
+                                   Description = NA,
+                                   Year = NA)
+for (i in 1:length(biomasses_yearly)) {
+  tmp <- data.frame(Model_annual_mean = NA,
+                    Units = NA,
+                    Description = NA)
+  tmp_join <- rbind(tmp,biomasses_yearly_1x[[i]])
+  tmp_join$Year <- transient_years[i]
+  all_biomasses_yearly_1x <- rbind(all_biomasses_yearly_1x,tmp_join)
+}
+all_biomasses_1x <- data.frame(Model_annual_mean = NA,
+                                      Units = NA,
+                                      Description = NA,
+                                      Year = NA)
+for (i in 1:length(biomasses_yearly)) {
+  tmp <- data.frame(Model_annual_mean = NA,
+                    Units = NA,
+                    Description = NA)
+  tmp_join <- rbind(tmp,biomasses_1x[[i]])
+  tmp_join$Year <- transient_years[i]
+  all_biomasses_1x <- rbind(all_biomasses_1x,tmp_join)
+}
 
 names(all_biomasses)[3] <- "Guild"
 all_biomasses <- all_biomasses %>% filter(Guild %in% useful)
+
 names(all_biomasses_yearly)[3] <- "Guild"
 all_biomasses_yearly <- all_biomasses_yearly %>% filter(Guild %in% useful)
+
+names(all_biomasses_1x)[3] <- "Guild"
+all_biomasses_1x <- all_biomasses_1x %>% filter(Guild %in% useful)
+
+names(all_biomasses_yearly_1x)[3] <- "Guild"
+all_biomasses_yearly_1x <- all_biomasses_yearly_1x %>% filter(Guild %in% useful)
+
 
 top_level <- readRDS("../Objects/biomass_transients.RDS")
 top_level_smooth <- readRDS("../Objects/biomass_transients_smoothed_climate.RDS")
@@ -98,24 +135,39 @@ biomass_smooth_guilds <- final_changing_smooth %>% filter(Guild %in% useful)
 # Our recovery time is the time it takes for the 1x fishing line to reach the black line
 # so, let's just use the one fishing rate (1x) and calculate that value
 
-biomass_guilds_1x <- biomass_guilds %>% filter(FishingRate == 0)
-biomass_guilds_1x_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0) #actually take 0x fishing here
+crashed_0x_return <- biomass_guilds %>% filter(FishingRate == 0)
+crashed_0x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0) #actually take 0x fishing here
+
+crashed_1x_return <- biomass_guilds %>% filter(FishingRate == 1)
+crashed_1x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 1) #actually take 0x fishing here
+
+##renaming is good for the soul
+no_crash_0x_smooth <- all_biomasses
+no_crash_0x_yearly <- all_biomasses_yearly
+
+no_crash_1x_smooth <- all_biomasses_1x
+no_crash_1x_yearly <- all_biomasses_yearly_1x
+
+#Have to turn on what you need here
 ggplot() +
-  geom_line(data = all_biomasses,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.8) +
-  geom_line(data = all_biomasses_yearly,aes(x = Year,y = Model_annual_mean),color = "black",alpha = 0.2) +
-  geom_line(data = biomass_guilds_1x_smooth,aes(x = as.numeric(Year),y = Biomass),color = "red",alpha = 1) +
-  geom_line(data = biomass_guilds_1x,aes(x = as.numeric(Year),y = Biomass),color = "red",alpha = 0.2) +
+  #geom_line(data = no_crash_1x_smooth,aes(x = Year,y = Model_annual_mean),color = "blue",alpha = 1,linetype = "dashed") +
+  #geom_line(data = no_crash_1x_yearly,aes(x = Year,y = Model_annual_mean),color = "blue",alpha = 0.4) + #max capacity, 1x fishing - no crash
+  #geom_line(data = crashed_1x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "lightblue",alpha = 1) +
+  #geom_line(data = crashed_1x_return,aes(x = as.numeric(Year),y = Biomass),color = "lightblue",alpha = 0.8) +
+  #geom_line(data = no_crash_0x_smooth,aes(x = Year,y = Model_annual_mean),color = "red",alpha = 0.8,linetype = "dashed") +
+  #geom_line(data = no_crash_0x_yearly,aes(x = Year,y = Model_annual_mean),color = "red",alpha = 0.2) + ##max capacity, 0x fishing
+  #geom_line(data = crashed_0x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "maroon",alpha = 1) +
+  #geom_line(data = crashed_0x_return,aes(x = as.numeric(Year),y = Biomass),color = "maroon",alpha = 0.4) +
   labs(x = "Year",
        y = "Guild Biomass",
        color = "Fishing Reintroduction Rate\n (DFHR and PFHR)") +
   theme(legend.position = "top") +
   facet_wrap(~ Guild,scales = "free_y") +
-  labs(title = "Crash system, regrow with 0x fishing",
-       caption = "Dark red: Decadal Climate Smooth of Crashed Biomass. Faint red: Yearly Crashed Biomass \n
-       Black: Decadal Climate Smooth of Biomass without Crash. Faint Black: Yearly Biomass Without Crash") +
+  labs(caption = "Maroon: Crashed System - Recovered at 0x Fishing. Red/Dashed: No Crash - 0x Fishing \n
+       Light Blue: Crashed System - Recovered at 1x Fishing. Dark Blue/Dashed: No Crash - 1x Fishing") +
   theme(plot.caption = element_text(size = 6)) +
   NULL
-ggsave("../Figures/Preliminary/all_guilds_shifting_baseline_0x.png",
+ggsave("../Figures/Preliminary/1x_crash_with_baseline.png",
        height = 1080,
        width = 1920,
        units = "px",
