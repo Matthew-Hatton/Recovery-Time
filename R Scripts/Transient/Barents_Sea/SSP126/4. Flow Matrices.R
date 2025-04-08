@@ -11,9 +11,13 @@ transient_years <- seq(2010,2050)
 unfished <- readRDS("../Objects/biomass_transients.RDS")[[1]][["Flow_Matrices"]] # get unfished system
 fished <- readRDS("../Objects/biomass_transients.RDS")[[2]][["Flow_Matrices"]] # get unfished system
 
+
+crash <- readRDS("../Objects/Shifting_Baseline_Decadal_0_fishing.RDS")
+crash_flow <- crash[["Flow_Matrices"]]
+
 # Function to extract fluxes
-extract_fluxes <- function(year) {
-  dat <- all_data[[as.character(year)]]
+extract_fluxes <- function(year,dat) {
+  dat <- dat[[as.character(year)]]
   
   # flux values for target species
   seal <- dat["seal", "bear"]
@@ -29,33 +33,10 @@ extract_fluxes <- function(year) {
 }
 
 # apply function over transient_years
-results <- do.call(rbind, lapply(transient_years, extract_fluxes))
+results_fished <- do.call(rbind, lapply(transient_years, function(year) extract_fluxes(year, fished)))
+results_unfished <- do.call(rbind, lapply(transient_years, function(year) extract_fluxes(year, unfished)))
+results_no_crash <- do.call(rbind, lapply(transient_years, function(year) extract_fluxes(year, crash_flow)))
 
-saveRDS(results,"../Objects/Flux_To_Bears.RDS")
-
-## Need to also see the flow into Demersal Fish
-## Preference matrix identifies: benths, plankt, planklar
-extract_fluxes_dem <- function(year) {
-  dat <- fished[[as.character(year)]]
-  
-  # flux values for target species
-  benths <- dat["benths", "dfish"]
-  pfish <- dat["pfish", "dfish"]
-  pfishlar <- dat["pfishlar", "dfish"]
-  
-  return(data.frame(
-    Species = c("benths", "pfish","pfishlar"),
-    Flux = c(benths, pfish, pfishlar),
-    Year = year
-  ))
-}
-res_unfished <- do.call(rbind, lapply(transient_years, extract_fluxes_dem))
-res_fished <- do.call(rbind, lapply(transient_years, extract_fluxes_dem))
-
-res_unfished <- res_unfished %>% mutate(marker = "unfished")
-res_fished <- res_fished %>% mutate(marker = "fished")
-
-final <- rbind(res_unfished,res_fished)
-ggplot() +
-  geom_line(data = final,aes(x = Year,y = Flux,color = marker)) +
-  facet_wrap(~Species,ncol = 1)
+saveRDS(results_fished,"../Objects/Flux_To_Bears_fished.RDS")
+saveRDS(results_unfished,"../Objects/Flux_To_Bears_unfished.RDS")
+saveRDS(results_no_crash,"../Objects/Flux_To_Bears_noCrash.RDS")

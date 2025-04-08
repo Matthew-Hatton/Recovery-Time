@@ -3,13 +3,20 @@
 rm(list = ls()) #Reset
 library(tidyverse)
 
-fluxes <- readRDS("../Objects/Flux_To_Bears.RDS") # Load fluxes
+fluxes_fished <- readRDS("../Objects/Flux_To_Bears_fished.RDS") %>% mutate(Marker = "Fished") # Load fluxes
+fluxes_unfished <- readRDS("../Objects/Flux_To_Bears_unfished.RDS") %>% mutate(Marker = "Unfished")
+fluxes_no_crash <- readRDS("../Objects/Flux_To_Bears_noCrash.RDS") %>% mutate(Marker = "No Crash")
+fluxes <- rbind(fluxes_fished,fluxes_unfished,fluxes_no_crash)
 
-ggplot(data = fluxes,aes(x = Year,y = Flux,color = Species)) +
+
+
+
+ggplot(data = fluxes,aes(x = Year,y = Flux,color = Marker)) +
   geom_line() +
-  geom_point() +
+  #geom_point() +
   labs(y = "Wholedomain Flux to Maritime Mammals (mmn/m2)",
-       color = "Guild")
+       color = "Guild") +
+  facet_wrap(~Species,scales = "free")
 
 ggsave("../Figures/Preliminary/Fluxes_To_Bears.png",
        height = 1080,
