@@ -42,20 +42,18 @@ NH4_boundary <- readRDS("../Objects/NH4 River Concentrations BS.RDS")           
 NO3_boundary <- readRDS("../Objects/NO3 River Concentrations BS.RDS")                                          # Read in NO3
 
 #### Crashing the system ####
-
-
 e2ep_transient <- function(x) {
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   model <- e2ep_read(model.name = "Barents_Sea",
                      model.variant = "2011-2019") # Read in new baseline model
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:10] <- 10 # Set a high HR for DF
+  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- 10 # Set a high HR for everything (crash the system)
   print("Running Crashed System...")
-  results <- e2ep_run(model,nyears = 50) # Run model again
+  results <- e2ep_run(model,nyears = 50) # Run model to s.s
   model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                  csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
-                                                                                                             csv.output = F)[,1]
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(1,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]]))
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- x # reset fishing to value specified
+                                                                                                             csv.output = F)[,1] #plug in I.C to model
+  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(1,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Reset fishing
+  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][1:2] <- x # reset fishing for DF/PF to value specified
   #### Iterate over different time periods ####
   for (i in 1:length(transient_years[1:41])) {
     #### Chemistry ####

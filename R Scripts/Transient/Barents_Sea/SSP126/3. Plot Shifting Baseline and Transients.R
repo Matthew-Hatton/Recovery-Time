@@ -109,7 +109,6 @@ for (i in 1:length(top_level[[1]][["Biomasses"]])) {
   colnames(biomass) <- transient_years
   colnames(biomass_smoothed) <- transient_years
   
-  # Convert the matrix to a dataframe
   biomass_df <- biomass %>% as.data.frame()
   biomass_df$FishingRate <- 0:3
   biomass_smooth_df <- biomass_smoothed %>% as.data.frame()
@@ -136,10 +135,10 @@ biomass_smooth_guilds <- final_changing_smooth %>% filter(Guild %in% useful)
 # so, let's just use the one fishing rate (1x) and calculate that value
 
 crashed_0x_return <- biomass_guilds %>% filter(FishingRate == 0)
-crashed_0x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0) #actually take 0x fishing here
+crashed_0x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 0) #take 0x fishing
 
 crashed_1x_return <- biomass_guilds %>% filter(FishingRate == 1)
-crashed_1x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 1) #actually take 0x fishing here
+crashed_1x_return_smooth <- biomass_smooth_guilds %>% filter(FishingRate == 1) #take 1x fishing
 
 ##renaming is good for the soul
 no_crash_0x_smooth <- all_biomasses
@@ -150,13 +149,13 @@ no_crash_1x_yearly <- all_biomasses_yearly_1x
 
 #Have to turn on what you need here
 ggplot() +
-  #geom_line(data = no_crash_1x_smooth,aes(x = Year,y = Model_annual_mean),color = "blue",alpha = 1,linetype = "dashed") +
+  geom_line(data = no_crash_1x_smooth,aes(x = Year,y = Model_annual_mean),color = "blue",alpha = 1,linetype = "dashed") +
   #geom_line(data = no_crash_1x_yearly,aes(x = Year,y = Model_annual_mean),color = "blue",alpha = 0.4) + #max capacity, 1x fishing - no crash
-  #geom_line(data = crashed_1x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "lightblue",alpha = 1) +
+  geom_line(data = crashed_1x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "lightblue",alpha = 1) +
   #geom_line(data = crashed_1x_return,aes(x = as.numeric(Year),y = Biomass),color = "lightblue",alpha = 0.8) +
-  #geom_line(data = no_crash_0x_smooth,aes(x = Year,y = Model_annual_mean),color = "red",alpha = 0.8,linetype = "dashed") +
+  geom_line(data = no_crash_0x_smooth,aes(x = Year,y = Model_annual_mean),color = "red",alpha = 0.8,linetype = "dashed") +
   #geom_line(data = no_crash_0x_yearly,aes(x = Year,y = Model_annual_mean),color = "red",alpha = 0.2) + ##max capacity, 0x fishing
-  #geom_line(data = crashed_0x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "maroon",alpha = 1) +
+  geom_line(data = crashed_0x_return_smooth,aes(x = as.numeric(Year),y = Biomass),color = "maroon",alpha = 1) +
   #geom_line(data = crashed_0x_return,aes(x = as.numeric(Year),y = Biomass),color = "maroon",alpha = 0.4) +
   labs(x = "Year",
        y = "Guild Biomass",
@@ -167,10 +166,10 @@ ggplot() +
        Light Blue: Crashed System - Recovered at 1x Fishing. Dark Blue/Dashed: No Crash - 1x Fishing") +
   theme(plot.caption = element_text(size = 6)) +
   NULL
-ggsave("../Figures/Preliminary/1x_crash_with_baseline.png",
-       height = 1080,
-       width = 1920,
-       units = "px",
-       dpi = 200)
+# ggsave("../Figures/Preliminary/all_together_with_baseline.png",
+#        height = 1080,
+#        width = 1920,
+#        units = "px",
+#        dpi = 200)
 
 
