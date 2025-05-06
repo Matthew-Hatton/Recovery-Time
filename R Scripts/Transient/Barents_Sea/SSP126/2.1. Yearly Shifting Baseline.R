@@ -18,7 +18,7 @@ master <- list(All_Results = list(),
                Initial_Conditions = list()) #How are we going to save all of this?
 Force <- "CNRM" # What forcing are we using? GFDL or CNRM
 ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
-transient_years <- seq(2010,2061) # How far do we want to compute?
+transient_years <- seq(2010,2069) # How far do we want to compute?
 
 #### LOAD MODEL AND EXAMPLE FILES ####
 model <- e2ep_read(model.name = "Barents_Sea",
@@ -46,7 +46,7 @@ NH4_boundary <- readRDS("../Objects/NH4 River Concentrations BS.RDS")           
 NO3_boundary <- readRDS("../Objects/NO3 River Concentrations BS.RDS")                                          # Read in NO3
 
 
-for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cuts at 2050. To compute that decadal average we don't want to run out of data
+for (i in 1:length(transient_years)) { # We need to make sure the loop cuts at 2050. To compute that decadal average we don't want to run out of data
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   My_boundary_data <- readRDS("../Objects/Boundary measurements.rds") %>%                                     # Import data
     pivot_longer(
@@ -199,7 +199,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
   model[["data"]][["physics.drivers"]] <- Physics_template #lsoda error here
   
   results <- e2ep_run(model = model,
-                      nyears = 50)
+                      nyears = 1)
   
   #Pull everything we need
   master[["All_Results"]][[paste0(transient_years[i])]] <- results
@@ -217,7 +217,7 @@ for (i in 1:length(transient_years[1:41])) { # We need to make sure the loop cut
   #Reinsert I.C
   model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                              csv.output = F)[,1]
-  cat("\rFinished", i, "of", length(transient_years[1:41]),"\n")
+  cat("\rFinished", i, "of", length(transient_years),"\n")
 }
 
-saveRDS(master,"../Objects/Shifting_Baseline_Yearly_1_fishing.RDS")
+#saveRDS(master,"../Objects/Shifting_Baseline_Yearly_1_fishing.RDS")

@@ -15,10 +15,10 @@ scripts <- c(                                           # List scripts in the or
   # "./R scripts/NE/3.1 NE EXTRACT DAILY BARENTS_SEA.R",
   # "./R scripts/NE/3.2 NE EXTRACT DAILY EAST_GREENLAND.R",
   # "./R scripts/Transient/Barents_Sea/SSP126/1.1. Yearly Transients.R",
-  # "./R scripts/Transient/Barents_Sea/SSP126/1.2. Decadal Smoothed Transients.R",
-  "./R scripts/Transient/Barents_Sea/SSP126/2.1. Yearly Shifting Baseline.R",
-  "./R scripts/Transient/Barents_Sea/SSP126/2.2. Decadal Shifting Baseline.R",
-  "./R scripts/Transient/Barents_Sea/SSP126/3. Plot shifting Baseline and Transients.R"
+  #"./R scripts/Transient/Barents_Sea/SSP126/1.2. Decadal Smoothed Transients.R",
+  # "./R scripts/Transient/Barents_Sea/SSP126/2.1. Yearly Shifting Baseline.R",
+  "./R scripts/Transient/Barents_Sea/SSP126/2.2. Decadal Shifting Baseline.R"
+  #"./R scripts/Transient/Barents_Sea/SSP126/3. Plot shifting Baseline and Transients.R"
 ) %>% 
   map(MiMeMo.tools::execute)                                                           # Run the scripts
 
