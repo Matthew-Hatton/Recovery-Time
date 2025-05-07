@@ -234,7 +234,7 @@ e2ep_transient <- function(x,guilds_to_crash) { # Guilds will take a vector of n
     }, error = function(e) {
       message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
       saveRDS(master,paste0("../Objects/Experiments/Crash/FAILED_AT_",transient_years[i],"Demersal_crash_",crash,"_relax_",relax,".RDS"))
-      return(NULL)  # or handle differently
+      return(master)
     })
     
     

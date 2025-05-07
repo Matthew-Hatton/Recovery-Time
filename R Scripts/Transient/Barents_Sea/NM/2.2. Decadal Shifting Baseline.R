@@ -87,6 +87,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   NO3_boundary <- readRDS("../Objects/Barents_Sea/NM/River nitrate and ammonia.rds") %>% subset(select = c(Month,Nitrate))                                        # Read in NO3
   
   for (i in 1:length(transient_years[1:(length(transient_years)-10)])) { # We need to make sure the loop cuts at 2050. To compute that decadal average we don't want to run out of data
+    model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 
     My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%   
       filter(Year %in% (transient_years[seq(i,i+10)])) %>%    # Import data
       group_by(Month, Compartment, Variable) %>%                                                 # Average across years
@@ -243,10 +244,11 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     model[["data"]][["physics.drivers"]] <- Physics_template
     
     results <- tryCatch({
-      e2ep_run(model = model, nyears = 6)
+      e2ep_run(model = model, nyears = 50)
     }, error = function(e) {
       message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
-      return(master)  #
+      saveRDS(master,paste0("../Objects/Experiments/Baseline/",guild_to_crash,"Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
+      return(master)
     })
     
     #Pull everything we need
