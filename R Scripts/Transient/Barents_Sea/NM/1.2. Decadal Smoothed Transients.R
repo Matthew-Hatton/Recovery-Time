@@ -16,7 +16,7 @@ master <- list(All_Results = list(),
                Initial_Conditions = list()) #How are we going to save all of this?
 Force <- "CNRM" # What forcing are we using? GFDL or CNRM
 ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
-transient_years <- seq(2010,2023) # How far do we want to compute?
+transient_years <- seq(2010,2099) # How far do we want to compute?
 crash <- 10 # how hard should we fish?
 relax <- 0 # what fishing mult should we relax to? (post-crash)
 
@@ -64,7 +64,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- crash # Set a high HR for focal guild
   print("Running Crashed System...")
-  results <- e2ep_run(model,nyears = 50) # Run model to s.s
+  results <- e2ep_run(model,nyears = 20) # Run model to s.s
   
   model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                  csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
@@ -197,7 +197,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
     Physics_template$so_temp <- filter(My_volumes, Compartment == "Offshore S")$Temperature_avg
     Physics_template$d_temp <- filter(My_volumes, Compartment == "Offshore D")$Temperature_avg
     Physics_template$si_temp <- filter(My_volumes, Compartment == "Inshore S")$Temperature_avg
-    Physics_template$rivervol <- My_Rivers$Runoff / filter(My_scale, Shore == "Inshore")$Volume # think it's this one causing issues 
+    Physics_template$rivervol <- My_Rivers$Runoff / filter(My_scale, Shore == "Inshore")$Volume
     Physics_template$logkvert <- log10(My_V_Flows$V_diff)
     Physics_template$mixlscale <- Physics_template$mixlscale
     Physics_template$upwelling <- 0
