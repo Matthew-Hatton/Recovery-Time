@@ -23,8 +23,9 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   
   # Debugging
   # guilds_to_crash <- c("Demersal_fish")
-  # i <- 13
+  # i <- 8
   # hr_scale <- 0
+  
   master <- list(All_Results = list(),
                  Flow_Matrices = list(),
                  Biomasses = list(),
@@ -243,13 +244,15 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     # ## Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
-    results <- tryCatch({
-      e2ep_run(model = model, nyears = 50)
-    }, error = function(e) {
-      message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
-      saveRDS(master,paste0("../Objects/Experiments/Baseline/",guild_to_crash,"Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
-      return(master)
-    })
+    results <- e2ep_run(model = model,
+                        nyears = 30)
+    # results <- tryCatch({
+    #   e2ep_run(model = model, nyears = 50)
+    # }, error = function(e) {
+    #   message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
+    #   saveRDS(master,paste0("../Objects/Experiments/Baseline/",guild_to_crash,"Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
+    #   return(master)
+    # })
     
     #Pull everything we need
     master[["All_Results"]][[paste0(transient_years[i])]] <- results
@@ -268,10 +271,9 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                csv.output = F)[,1]
     setTxtProgressBar(pb,i)
-    #cat("\rFinished", i, "of", length(transient_years),"\n")
+
   }
   return(master)
-  #saveRDS(master,paste0("../Objects/Shifting_Baseline_Decadal_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
 }
 
 baselines <- e2ep_transient_baseline(hr_scale = 0,guilds_to_crash = "Demersal_fish")
