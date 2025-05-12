@@ -1,4 +1,4 @@
-## Overwrite example boundary data and run transient dynamics
+## Overwrite example boundary data and run transient dynamics for combinations of crash and relax
 
 #### Setup ####
 rm(list=ls())                                                                                              # Wipe the brain
@@ -13,13 +13,10 @@ master <- list(All_Results = list(),
                Flow_Matrices = list(),
                Biomasses = list(),
                Network_Indicators = list(),
-               Initial_Conditions = list()) #How are we going to save all of this?
+               Initial_Conditions = list(),
+               Combination = list()) #How are we going to save all of this?
 Force <- "CNRM" # What forcing are we using? GFDL or CNRM
 ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
-transient_years <- seq(2010,2099) # How far do we want to compute?
-crash <- 10 # how hard should we fish?
-relax <- 0 # what fishing mult should we relax to? (post-crash)
-
 
 #### LOAD MODEL AND EXAMPLE FILES ####
 model <- e2ep_read("Barents_Sea",
@@ -54,7 +51,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   # relax <- 0
   # i = 1
   # crash <- 10
-
+  
   model <- e2ep_read(model.name = "Barents_Sea",
                      model.variant = "2011-2019") # Read in new baseline model
   guilds <- c("Planktivorous_fish","Demersal_fish","Migratory_fish",
@@ -65,13 +62,15 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- crash # Set a high HR for focal guild
   print("Running Crashed System...")
   results <- e2ep_run(model,nyears = 20) # Run model to s.s
-  
   model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                  csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
                                                                                                              csv.output = F)[,1] #plug in I.C to model
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Reset fishing
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- relax # reset matched fishing to specific value
-
+  
+  meta_combos <- data.frame(pre = crash,
+                            post = relax)
+  
   #### Iterate over different time periods ####
   for (i in 1:(length(transient_years)-10)) {
     #### Chemistry ####
@@ -85,7 +84,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
       mutate(Compartment = factor(Compartment, levels = c("Inshore S", "Offshore S", "Offshore D"),
                                   labels = c("Inshore S" = "SI", "Offshore S" = "SO", "Offshore D" = "D"))) %>%
       pivot_wider(names_from = c(Compartment, Variable), names_sep = "_", values_from = Measured) # Spread columns to match template                                                                      # Remove temporary column
-
+    
     My_atmosphere <- readRDS(stringr::str_glue("../Objects/Barents_Sea/NM/Atmospheric N deposition.rds")) %>%
       filter(Year %in% seq(2010,max(.$Year))) %>%
       group_by(Month, Oxidation_state, Shore,  Year) %>%
@@ -94,7 +93,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
       ungroup() %>%
       pivot_wider(names_from = c(Shore, Oxidation_state), values_from = Measured) %>%                     # Spread to match template
       arrange(Month)
-
+    
     My_DIN_fix <- readRDS("../Objects/Barents_Sea/NM/Ammonia to DIN.rds")
     Boundary_template <- model[["data"]][["chemistry.drivers"]]
     Boundary_new <- mutate(Boundary_template,
@@ -144,7 +143,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
       mutate(Flow = Flow/Volume) %>%                                            # Scale flows by compartment volume
       mutate(Flow = abs(Flow * 86400)) %>%                                      # Multiply for total daily from per second, and correct sign for "out" flows
       arrange(Month)                                                           # Order by month to match template
-
+    
     
     My_V_Flows <- readRDS("../Objects/Barents_Sea/NM/vertical diffusivity.rds") %>%
       filter(Year %in% transient_years[seq(i,i+10)]) %>%                                     # Limit to reference period
@@ -234,29 +233,50 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
       #saveRDS(master,paste0("../Objects/Experiments/Crash/FAILED_AT_",transient_years[i],"Demersal_crash_",crash,"_relax_",relax,".RDS"))
       return(master)
     })
-
+    
+    # meta_combos <- data.frame(pre = .x,
+    #                           post = .y)
+    
     # Pull everything we need
-    master[["All_Results"]][[paste0(transient_years[i])]] <- results
     master[["Flow_Matrices"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
     master[["Biomasses"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
     master[["Network_Indicators"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
-    
+    # master[["Combination"]][[paste0(transient_years[i])]] <- meta_combos
     
     #Extract I.C
     init_con <- e2ep_extract_start(model = model,results = results,
                                    csv.output = F)
-    #Store I.C
-    master[["Initial_Conditions"]][[paste0(transient_years[i])]] <- init_con
+    # #Store I.C
+    # master[["Initial_Conditions"]][[paste0(transient_years[i])]] <- init_con
+    # 
     
     #Reinsert I.C
     model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                csv.output = F)[,1]
     setTxtProgressBar(pb,i)
   }
+  master[["Combination"]] <- meta_combos
   return(master)
 }
-top_level <- e2ep_transient(relax = relax,guilds_to_crash = c("Demersal_fish"),crash = crash)
-# top_level <- future_map(relax, e2ep_transient,c("Demersal_fish"),.progress = F)
+
+tic()
+
+## DEFINE FOR FUNCTION
+pre_post <- expand.grid(pre = seq(0,5,0.1),post = seq(0,5,0.1))
+pre <- pre_post$pre
+post <- pre_post$post
+
+guilds_to_crash <- "Demersal_fish"
+
+transient_years <- seq(2023,2099) # How far do we want to compute?
+
+results_list <- future_map2(.x = pre,.y = post, 
+                           ~ e2ep_transient(relax = .x, 
+                                            crash = .y,
+                                            guilds_to_crash = guilds_to_crash),
+                           .options = furrr_options(seed = TRUE),
+                           .progress = T)
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/PRE_POST_Demersal_crash.RDS"))
 toc()
 
-saveRDS(top_level,paste0("../Objects/Experiments/Crash/Demersal_crash_",crash,"_relax_",relax,".RDS"))
+

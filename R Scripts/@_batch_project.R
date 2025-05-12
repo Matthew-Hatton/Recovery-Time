@@ -17,8 +17,10 @@ scripts <- c(                                           # List scripts in the or
   # "./R scripts/Transient/Barents_Sea/SSP126/1.1. Yearly Transients.R",
   #"./R scripts/Transient/Barents_Sea/SSP126/1.2. Decadal Smoothed Transients.R",
   # "./R scripts/Transient/Barents_Sea/SSP126/2.1. Yearly Shifting Baseline.R",
-  "./R scripts/Transient/Barents_Sea/SSP126/2.2. Decadal Shifting Baseline.R"
-  #"./R scripts/Transient/Barents_Sea/SSP126/3. Plot shifting Baseline and Transients.R"
+  # "./R scripts/Transient/Barents_Sea/SSP126/2.2. Decadal Shifting Baseline.R"
+  #"./R scripts/Transient/Barents_Sea/SSP126/3. Plot shifting Baseline and Transients.R",
+  "./R scripts/Transient/Barents_Sea/NM/1.2. Decadal Smoothed Transients.R",
+  "./R scripts/Transient/Barents_Sea/NM/2.2. Decadal Shifting Baseline.R"
 ) %>% 
   map(MiMeMo.tools::execute)                                                           # Run the scripts
 
