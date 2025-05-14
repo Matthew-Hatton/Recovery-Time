@@ -75,7 +75,7 @@ for (i in seq_along(master)) {
     }
     
   } else {
-    # CASE: Starts below → look for recovery year
+    # CASE: Starts below - look for recovery year
     recovery_row <- current %>% filter(biomasses >= threshold) %>% slice(1)
     
     if (nrow(recovery_row) == 0) {
@@ -103,6 +103,7 @@ recovery_time <- data.frame(
   post = post
 )
 
+# Plot
 ggplot() +
   geom_raster(data = recovery_time,aes(x = pre,y = post,fill = Recovery),
               interpolate = F) + 
@@ -111,18 +112,18 @@ ggplot() +
   scale_y_continuous(expand = c(0,0))
 
 ############ DEBUG ############
-
-debug <- data.frame(Year = transient_years,
-                    baseline = baseline_1x_df)
-recov <- c()
-for (i in 1:length(transient_years)) {
-  recov <- append(recov,foo[["Biomasses"]][[i]]$Model_annual_mean[27])
-}
-debug$recov <- recov
-
-weird <- master[[54]]
-ggplot() + 
-  geom_line(data = weird,aes(x = year,y = biomasses)) +
-  geom_line(data = weird,aes(x = year,y = baseline),linetype = "dashed") +
-  geom_line(data = weird,aes(x = year,y = MSC),linetype = "dashed",color = "red")
-## value drops below
+# 
+# debug <- data.frame(Year = transient_years,
+#                     baseline = baseline_1x_df)
+# recov <- c()
+# for (i in 1:length(transient_years)) {
+#   recov <- append(recov,foo[["Biomasses"]][[i]]$Model_annual_mean[27])
+# }
+# debug$recov <- recov
+# 
+# weird <- master[[54]]
+# ggplot() + 
+#   geom_line(data = weird,aes(x = year,y = biomasses)) +
+#   geom_line(data = weird,aes(x = year,y = baseline),linetype = "dashed") +
+#   geom_line(data = weird,aes(x = year,y = MSC),linetype = "dashed",color = "red")
+# ## value drops below

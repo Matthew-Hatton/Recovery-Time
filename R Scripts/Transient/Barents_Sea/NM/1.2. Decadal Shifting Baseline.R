@@ -15,7 +15,7 @@ tic()
 
 Force <- "CNRM" # What forcing are we using? GFDL or CNRM
 ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
-transient_years <- seq(2010,2099) # How far do we want to compute?
+transient_years <- seq(2020,2099) # How far do we want to compute?
 
 e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
@@ -241,11 +241,11 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     Physics_template$so_airtemp <- filter(My_air_temp,Shore == "Offshore")$Measured
     Physics_template$si_airtemp <- filter(My_air_temp,Shore == "Inshore")$Measured
     
-    # ## Replace with new drivers
+    ## Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
     results <- e2ep_run(model = model,
-                        nyears = 20)
+                        nyears = 50)
     
     #Pull everything we need
     master[["All_Results"]][[paste0(transient_years[i])]] <- results
@@ -269,9 +269,9 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   return(master)
 }
 guild_to_crash <- c("Demersal_fish")
-hr_scale <- c(1)
+hr_scale <- c(0)
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
-saveRDS(baselines,paste0("../Objects/Experiments/Baseline/1X_Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
+saveRDS(baselines,paste0("../Objects/Experiments/Baseline/Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
         
 # future_map(.x = c(0),.f = e2ep_transient_baseline,c("Demersal_fish"),.progress = T)
 toc()

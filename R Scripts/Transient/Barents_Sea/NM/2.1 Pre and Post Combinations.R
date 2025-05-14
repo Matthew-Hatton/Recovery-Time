@@ -10,7 +10,7 @@ plan(multisession) # parallel processing is good
 
 tic()
 
-transient_years <- seq(2023,2099 + 200) # run for an extra 100 years after the data has ran out
+transient_years <- seq(2023,2099) # run for an extra 100 years after the data has ran out
 master <- list(All_Results = list(),
                Flow_Matrices = list(),
                Biomasses = list(),
@@ -71,7 +71,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
                             post = relax)
   
   #### Iterate over different time periods ####
-  for (i in 1:200) {
+  for (i in 1:(length(transient_years)+100)) {
     # Define your end year
     max_year <- 2099
     

@@ -16,7 +16,7 @@ master <- list(All_Results = list(),
                Initial_Conditions = list()) #How are we going to save all of this?
 Force <- "CNRM" # What forcing are we using? GFDL or CNRM
 ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
-transient_years <- seq(2023,2099) # How far do we want to compute?
+transient_years <- seq(2020,2099) # How far do we want to compute?
 
 
 #### LOAD MODEL AND EXAMPLE FILES ####
@@ -253,22 +253,18 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   }
   return(master)
 }
-crash <- 500
-relax <- 0
-top_level <- e2ep_transient(relax = relax,guilds_to_crash = c("Demersal_fish"),crash = crash)
-saveRDS(top_level,paste0("../Objects/Experiments/Crash/Demersal_crash_",crash,"_relax_",relax,".RDS"))
 
-relax_values <- c(0)
-crash <- 2.27 # MSY
+relax_values <- 0
+crash <- c(1,2.27,4.54) # baseline, MSY, 2x MSY
 guilds_to_crash <- "Demersal_fish"
 
-results_list <- future_map(relax_values, 
-                           ~ e2ep_transient(relax = .x, 
+results_list <- future_map(crash, 
+                           ~ e2ep_transient(relax = relax_values, 
                                             guilds_to_crash = guilds_to_crash, 
-                                            crash = crash),
+                                            crash = .x),
                            .options = furrr_options(seed = TRUE),
                            .progress = T)
-saveRDS(results_list,paste0("../Objects/Experiments/Crash/MULTIPLE_Demersal_crash.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/base_MSY_2xMSY_Demersal_crash.RDS"))
 toc()
 
 
