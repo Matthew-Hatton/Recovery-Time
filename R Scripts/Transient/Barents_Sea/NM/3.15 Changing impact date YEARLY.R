@@ -17,7 +17,7 @@ master <- list(All_Results = list(),
                Biomasses = list(),
                Network_Indicators = list(),
                Initial_Conditions = list()) #How are we going to save all of this?
-transient_years <- seq(2020,2099+1) # How far do we want to compute? +1 to account for previous 10 year crashes (with 5 being the interval size)
+transient_years <- seq(2020,2099) # How far do we want to compute? +1 to account for previous 10 year crashes (with 5 being the interval size)
 
 
 #### LOAD MODEL AND EXAMPLE FILES ####
@@ -75,10 +75,11 @@ My_Stress <- readRDS("../Objects/Barents_Sea/NM/Habitat disturbance.rds") %>%
 
 #### Crashing the system ####
 e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,progress = NULL) { # Guilds will take a vector of names of guilds to crash
+  options(dplyr.across.inform = FALSE)
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   #pb <- txtProgressBar(min = 0, max = length(transient_years)-10, style = 3) # progress bar
   
-  ## DEBUG
+  # ## DEBUG
   # guilds_to_crash <- "Demersal_fish"
   # relax <- 0
   # i <- 1
@@ -88,9 +89,9 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
   # nyears <- 1
   
   for (j in 1:length(interval)) {
-
-    model <- e2ep_read(model.name = "Barents_Sea",
-                       model.variant = "2011-2019") # Read in new baseline model
+    
+    model <- suppressMessages(e2ep_read(model.name = "Barents_Sea",
+                       model.variant = "2011-2019")) # Read in new baseline model
     guilds <- c("Planktivorous_fish","Demersal_fish","Migratory_fish",
                 "Benthos_susp-dep","Benthos_carn-scav","Zooplankton_carn",
                 "Birds","Pinnipeds","Cetaceans","Macrophytes")
@@ -148,7 +149,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       ungroup() %>% 
       arrange(Month)
     
-    My_H_Flows <- readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
+    My_H_Flows <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
       filter(Year %in% interval[j]) %>%                                     # Limit to reference period
       group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
       summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
@@ -156,7 +157,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       left_join(My_scale,by = join_by(Shore,slab_layer)) %>%                                                   # Attach compartment volumes
       mutate(Flow = Flow/Volume) %>%                                            # Scale flows by compartment volume
       mutate(Flow = abs(Flow * 86400)) %>%                                      # Multiply for total daily from per second, and correct sign for "out" flows
-      arrange(Month)                                                           # Order by month to match template
+      arrange(Month))                                                       # Order by month to match template
     
     
     My_V_Flows <- readRDS("../Objects/Barents_Sea/NM/vertical diffusivity.rds") %>%
@@ -166,14 +167,14 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       ungroup() %>% 
       arrange(Month)                                                            # Order by month to match template
     
-    My_volumes <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
+    My_volumes <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
       filter(Year %in% interval[j]) %>%                                     # Limit to reference period
       group_by(Compartment, Month) %>%                                          # By compartment and month
       summarise(across(c(DIN_avg,Phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
       ungroup() %>% 
-      arrange(Month)                                                            # Order by month to match template
+      arrange(Month))                                                            # Order by month to match template
     
-    My_ice <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
+    My_ice <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
       filter(Shore %in% c("Inshore","Offshore") & slab_layer == "S") %>%  # Remove Buffer Zone
       filter(Year %in% interval[j]) %>%  # Filter down to just the target year
       group_by(Month,Shore) %>% 
@@ -181,7 +182,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
                 Snow_Thickness = mean(Snow_Thickness_avg,na.rm = T),
                 Ice_Thickness = mean(Ice_Thickness_avg,na.rm = T),
                 Ice_Conc = mean(Ice_conc_avg,na.rm = T))%>% 
-      mutate(across(everything(), ~replace(., is.nan(.), 0)))
+      mutate(across(everything(), ~replace(., is.nan(.), 0))))
     
     
     Physics_template <- model[["data"]][["physics.drivers"]]
@@ -227,7 +228,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- crash # Set a HR for focal guild
     results <- e2ep_run(model,nyears = nyears) # Run model to s.s
-    e2ep_plot_ts(model = model,results = results)
+    
     model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                    csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
                                                                                                                csv.output = F)[,1] #plug in I.C to model
@@ -237,15 +238,15 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- relax # reset matched fishing to specific value
     
     # Def seq of years to compute
-    years <- seq(interval[j]+1,max(transient_years)-10)
+    years <- seq(interval[j]+1,max(transient_years))
     
     #### Run system from point of crash
     for (i in 1:length(years)) { # start from year after crash ie. 2:...
       #### Chemistry ####
       model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # Reset Wellmixed coefficient
       My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%
-        filter(Year %in% years) %>%    # Import data
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+        filter(Year == years[i]) %>%    # Import data
+        # filter(Year %in% years[seq(i,i+10)]) %>% 
         group_by(Month, Compartment, Variable) %>%                                                 # Average across years
         summarise(Measured = mean(Measured, na.rm = T)) %>%
         ungroup() %>%
@@ -253,7 +254,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
         mutate(Compartment = factor(Compartment, levels = c("Inshore S", "Offshore S", "Offshore D"),
                                     labels = c("Inshore S" = "SI", "Offshore S" = "SO", "Offshore D" = "D"))) %>%
         pivot_wider(names_from = c(Compartment, Variable), names_sep = "_", values_from = Measured) # Spread columns to match template
-
+      
       Boundary_template <- model[["data"]][["chemistry.drivers"]]
       Boundary_new <- mutate(Boundary_template,
                              so_nitrate = My_boundary_data$SO_DIN * (1-filter(My_DIN_fix, Depth_layer == "Shallow")$Proportion),
@@ -280,8 +281,8 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       model[["data"]][["chemistry.drivers"]] <- Boundary_new
       #### Physics ####
       My_light <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
-        filter(Shore == "Combined" & Year %in% years) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+        filter(Shore == "Combined") %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
+        filter(Year == years[i]) %>% 
         group_by(Month) %>%  # Average across months
         summarise(Measured = mean(Measured, na.rm = T)) %>% 
         ungroup() %>% 
@@ -289,50 +290,50 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       
       My_air_temp <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
         filter(Shore %in% c("Inshore","Offshore") & Year %in% years) %>% 
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+        filter(Year == years[i]) %>% 
         group_by(Month,Shore) %>% 
         summarise(Measured = mean(Measured)) %>% 
         ungroup() %>% 
         arrange(Month)
       
-      My_H_Flows <- readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
-        filter(Year %in% years) %>%                                     # Limit to reference period
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+      My_H_Flows <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
+        filter(Year == years[i]) %>%                                     # Limit to reference period
+        # filter(Year %in% years[seq(i,i+10)]) %>% 
         group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
         summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
         ungroup() %>% 
         left_join(My_scale,by = join_by(Shore,slab_layer)) %>%                                                   # Attach compartment volumes
         mutate(Flow = Flow/Volume) %>%                                            # Scale flows by compartment volume
         mutate(Flow = abs(Flow * 86400)) %>%                                      # Multiply for total daily from per second, and correct sign for "out" flows
-        arrange(Month)                                                           # Order by month to match template
+        arrange(Month))                                                          # Order by month to match template
       
       
       My_V_Flows <- readRDS("../Objects/Barents_Sea/NM/vertical diffusivity.rds") %>%
-        filter(Year %in% years) %>%                                     # Limit to reference period
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+        filter(Year == years[i]) %>%                                     # Limit to reference period
+        # filter(Year %in% years[seq(i,i+10)]) %>% 
         group_by(Month) %>% 
         summarise(V_diff = mean(Vertical_diffusivity, na.rm = T)) %>% 
         ungroup() %>% 
         arrange(Month)                                                            # Order by month to match template
       
-      My_volumes <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
-        filter(Year %in% years) %>%                                     # Limit to reference period
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+      My_volumes <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
+        filter(Year %in% years[i]) %>%                                     # Limit to reference period
+        # filter(Year %in% years[seq(i,i+10)]) %>% 
         group_by(Compartment, Month) %>%                                          # By compartment and month
         summarise(across(c(DIN_avg,Phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
         ungroup() %>% 
-        arrange(Month)                                                            # Order by month to match template
+        arrange(Month))                                                            # Order by month to match template
       
-      My_ice <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
+      My_ice <- suppressMessages(readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
         filter(Shore %in% c("Inshore","Offshore") & slab_layer == "S") %>%  # Remove Buffer Zone
-        filter(Year %in% years) %>%  # Filter down to just the target year
-        filter(Year %in% years[seq(i,i+10)]) %>% 
+        filter(Year == years[i]) %>%  # Filter down to just the target year
+        # filter(Year %in% years[seq(i,i+10)]) %>% 
         group_by(Month,Shore) %>% 
         summarise(Ice_Pres = mean(Ice_pres,na.rm = T),
                   Snow_Thickness = mean(Snow_Thickness_avg,na.rm = T),
                   Ice_Thickness = mean(Ice_Thickness_avg,na.rm = T),
                   Ice_Conc = mean(Ice_conc_avg,na.rm = T))%>% 
-        mutate(across(everything(), ~replace(., is.nan(.), 0)))
+        mutate(across(everything(), ~replace(., is.nan(.), 0))))
       
       
       Physics_template <- model[["data"]][["physics.drivers"]]
@@ -373,7 +374,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
       
       # Replace with new drivers
       model[["data"]][["physics.drivers"]] <- Physics_template
-      
+
       results <- tryCatch({
         e2ep_run(model = model, nyears = 1)
       }, error = function(e) {
@@ -381,22 +382,22 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,
         #saveRDS(master,paste0("../Objects/Experiments/Crash/FAILED_AT_",transient_years[i],"Demersal_crash_",crash,"_relax_",relax,".RDS"))
         return(master)
       })
-      
+
       # Pull everything we need
       master[["Biomasses"]][[paste0(interval[j])]][[paste0(interval[j] + i)]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
       master[["Network_Indicators"]][[paste0(interval[j])]][[paste0(interval[j] + i)]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
-      
-      
+
+
       #Extract I.C
       init_con <- e2ep_extract_start(model = model,results = results,
                                      csv.output = F)
-      
+
       #Reinsert I.C
       model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                  csv.output = F)[,1]
-
+      
     }
-
+    
   }
   return(master)
   
@@ -408,29 +409,33 @@ guilds_to_crash <- "Demersal_fish"
 interval <- seq(2020,2090,5)
 nyears <- 50
 
+## TEST
+# relax_values <- 0
+# crash <- c(1,2,3) # baseline, MSY, 2x MSY
+# guilds_to_crash <- "Demersal_fish"
+# interval <- seq(2020,2030,5)
+# nyears <- 1
 
 res <- function(crash) {
-  p <- progressor(steps = length(crash))
-
+  p <- progressor(along = crash)
+  
   future_map(crash,
              ~ {
-               p()
                e2ep_transient_interval(relax = relax_values,
                                        guilds_to_crash = guilds_to_crash,
                                        crash = .x,
                                        interval = interval,
                                        nyears = nyears)
-               },
-             .options = furrr_options(seed = TRUE),
-             .progress = T)
-
+               p()
+             },
+             .progress = F)
 }
 
 
 results_list <- res(crash)
 
 
-saveRDS(results_list,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash_YEARLY.RDS"))
 toc()
 
 
