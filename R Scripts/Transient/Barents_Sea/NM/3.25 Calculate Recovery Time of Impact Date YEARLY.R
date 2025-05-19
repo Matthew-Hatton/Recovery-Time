@@ -6,15 +6,15 @@ library(tibble)
 library(ggplot2)
 library(patchwork)
 
-transient_years <- seq(2020,2089)
+transient_years <- seq(2020,2099)
 
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash_YEARLY.RDS")
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 
 baseline_df <- data.frame(
   year = transient_years[1:length(baseline[["Biomasses"]])],
   baseline = map_dbl(baseline[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% 
-  mutate(MSC = baseline * 0.8)
+    mutate(MSC = baseline*0.8)
 
 annotate_transient <- function(transient_list) {
   imap(transient_list[["Biomasses"]], ~ {
@@ -29,7 +29,7 @@ transient_base <- annotate_transient(all[[1]])
 transient_MSY  <- annotate_transient(all[[2]])
 transient_2x_MSY <- annotate_transient(all[[3]])
 
-compute_recovery <- function(transient_list, baseline_df, label, threshold_val,threshold_col) {
+compute_recovery <- function(transient_list, baseline_df, label, threshold_val,threshold_col = "baseline") {
   map2_dfr(transient_list, names(transient_list), function(sublist, crash_year) {
     df <- sublist %>%
       bind_rows() %>%
@@ -59,7 +59,7 @@ compute_recovery <- function(transient_list, baseline_df, label, threshold_val,t
 
 
 
-threshold_val <- 0.999
+threshold_val <- 0.99
 baseline_MSC <- "baseline" # will use for plotting later
 
 base_recovery    <- compute_recovery(transient_base, baseline_df, "Baseline",baseline_MSC,
@@ -69,46 +69,37 @@ msy_recovery     <- compute_recovery(transient_MSY, baseline_df, "MSY",baseline_
 double_msy_recovery <- compute_recovery(transient_2x_MSY, baseline_df, "2x MSY",baseline_MSC,
                                         threshold_val = threshold_val)
 
-combined_recovery <- bind_rows(base_recovery, msy_recovery, double_msy_recovery) %>% 
-  na.omit()
+combined_recovery <- bind_rows(base_recovery, msy_recovery, double_msy_recovery)
 
 
 base <- ggplot(combined_recovery, aes(x = crash_year, y = Recovery_Time, color = HR)) +
-  geom_line(linewidth = 1) +
+  geom_line(linewidth = 1.2) +
   geom_point(size = 2) +
-  geom_smooth(se = F,alpha = 0.4,linewidth = 0.5) +
-  geom_hline(yintercept = 20,linetype = "dashed") +
   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate",
        title = "0 Fishing Baseline") +
   theme_minimal(base_size = 14) +
   theme(legend.position = "top") +
   NULL
 
-base
-
 baseline_MSC <- "MSC" # will use for plotting later
 
-base_recovery_MSC    <- compute_recovery(transient_base,    baseline_df, "Baseline",baseline_MSC,
+base_recovery    <- compute_recovery(transient_base,    baseline_df, "Baseline",baseline_MSC,
                                      threshold_val = threshold_val)
-msy_recovery_MSC <- compute_recovery(transient_MSY,     baseline_df, "MSY",baseline_MSC,
+msy_recovery     <- compute_recovery(transient_MSY,     baseline_df, "MSY",baseline_MSC,
                                      threshold_val = threshold_val)
-double_msy_recovery_MSC <- compute_recovery(transient_2x_MSY, baseline_df, "2x MSY",baseline_MSC,
+double_msy_recovery <- compute_recovery(transient_2x_MSY, baseline_df, "2x MSY",baseline_MSC,
                                         threshold_val = threshold_val)
 
-combined_recovery_MSC <- bind_rows(base_recovery_MSC, msy_recovery_MSC, double_msy_recovery_MSC)
+combined_recovery <- bind_rows(base_recovery, msy_recovery, double_msy_recovery)
 
-MSC <- ggplot(combined_recovery_MSC, aes(x = crash_year, y = Recovery_Time, color = HR)) +
+MSC <- ggplot(combined_recovery, aes(x = crash_year, y = Recovery_Time, color = HR)) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 2) +
-  geom_point(size = 2) +
-  geom_smooth(se = F,alpha = 0.4,linewidth = 0.5) +
   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate",
        title = "MSC Fishing Baseline") +
   theme_minimal(base_size = 14) +
   theme(legend.position = "top") +
   NULL
-
-MSC
 
 base + MSC + plot_layout(guides = "collect",axis_titles = "collect") & theme(legend.position = 'top')
 
@@ -128,7 +119,7 @@ extract_biomass <- function(scenario, crash_year, label) {
 }
 
 # All crash years
-crash_years <- seq(2020, 2085, 5)
+crash_years <- seq(2020, 2090, 5)
 
 # Combine data across all crash years and harvest rates
 biomass_df <- map_dfr(crash_years, function(cy) {

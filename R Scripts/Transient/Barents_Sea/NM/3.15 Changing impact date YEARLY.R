@@ -74,7 +74,7 @@ My_Stress <- readRDS("../Objects/Barents_Sea/NM/Habitat disturbance.rds") %>%
   arrange(Month)                                                            # Arrange to match template
 
 #### Crashing the system ####
-e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,progress = NULL) { # Guilds will take a vector of names of guilds to crash
+e2ep_transient_interval <- function(relax,guilds_to_crash,crash,interval,nyears,transient_years,progress = NULL) { # Guilds will take a vector of names of guilds to crash
   options(dplyr.across.inform = FALSE)
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   #pb <- txtProgressBar(min = 0, max = length(transient_years)-10, style = 3) # progress bar
@@ -409,31 +409,51 @@ guilds_to_crash <- "Demersal_fish"
 interval <- seq(2020,2090,5)
 nyears <- 50
 
+results_list <- future_map(
+    crash, ~{
+      e2ep_transient_interval(
+        relax = relax_values,
+        guilds_to_crash = guilds_to_crash,
+        crash = .x,
+        interval = interval,
+        nyears = nyears,
+        transient_years = transient_years
+      )},
+    .progress = T)
+
+
 ## TEST
+# transient_years <- seq(2020,2030)
 # relax_values <- 0
-# crash <- c(1,2,3) # baseline, MSY, 2x MSY
+# crash <- c(1,2) # baseline, MSY, 2x MSY
 # guilds_to_crash <- "Demersal_fish"
-# interval <- seq(2020,2030,5)
+# interval <- seq(2020,2025,5)
 # nyears <- 1
 
-res <- function(crash) {
-  p <- progressor(along = crash)
-  
-  future_map(crash,
-             ~ {
-               e2ep_transient_interval(relax = relax_values,
-                                       guilds_to_crash = guilds_to_crash,
-                                       crash = .x,
-                                       interval = interval,
-                                       nyears = nyears)
-               p()
-             },
-             .progress = F)
-}
+# res <- function(crash) {
+#   p <- progressor(along = crash)
+# 
+#   future_map(
+#     crash,
+#     ~ {
+# 
+#       result <- e2ep_transient_interval(
+#         relax = relax_values,
+#         guilds_to_crash = guilds_to_crash,
+#         crash = .x,
+#         interval = interval,
+#         nyears = nyears
+#       )
+#       p()
+#       # result
+#     },
+#     .progress = FALSE
+#   )
+# 
+#   return(result)
+# }
 
-
-results_list <- res(crash)
-
+# results_list <- res(crash)
 
 saveRDS(results_list,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash_YEARLY.RDS"))
 toc()
