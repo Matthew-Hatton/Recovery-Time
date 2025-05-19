@@ -9,7 +9,7 @@ library(patchwork)
 transient_years <- seq(2020,2099)
 
 all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_base_MSY_2xMSY_Demersal_crash_YEARLY.RDS")
-baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
+baseline <- readRDS("../Objects/Experiments/Baseline/YEARLY_Baseline_0_fishing_Demersal_fish.RDS")
 
 baseline_df <- data.frame(
   year = transient_years[1:length(baseline[["Biomasses"]])],
@@ -59,7 +59,7 @@ compute_recovery <- function(transient_list, baseline_df, label, threshold_val,t
 
 
 
-threshold_val <- 0.99
+threshold_val <- 1
 baseline_MSC <- "baseline" # will use for plotting later
 
 base_recovery    <- compute_recovery(transient_base, baseline_df, "Baseline",baseline_MSC,
@@ -80,6 +80,7 @@ base <- ggplot(combined_recovery, aes(x = crash_year, y = Recovery_Time, color =
   theme_minimal(base_size = 14) +
   theme(legend.position = "top") +
   NULL
+
 
 baseline_MSC <- "MSC" # will use for plotting later
 
