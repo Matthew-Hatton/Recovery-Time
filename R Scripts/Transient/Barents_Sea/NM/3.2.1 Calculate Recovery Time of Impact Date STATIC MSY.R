@@ -7,6 +7,9 @@ library(ggplot2)
 library(patchwork)
 library(slider)
 library(zoo)
+library(progressr)
+
+handlers("cli")
 
 transient_years <- seq(2020,2099)
 
