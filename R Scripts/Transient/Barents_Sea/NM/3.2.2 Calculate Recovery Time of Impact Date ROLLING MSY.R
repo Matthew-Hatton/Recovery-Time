@@ -57,24 +57,40 @@ for (i in 1:length(all)) {
     master <- rbind(df,master)
   }
 }
-# 
-threshold_val <- 0.99 # how close do we need to get to baseline?
 
+# Define parameters
+threshold_val <- 1     # E.g., 0.8 if threshold is 80% of baseline
+tolerance <- 0.05      # ±5%
+n_consecutive <- 5     # Require at least 3 consecutive years within range
 
-## Calculate recovery
-recovery_baseline <- master %>%
+# Add threshold bands and check if values are within range OR above baseline
+master_threshold <- master %>%
   group_by(HR, Crash_Year) %>%
-  mutate(threshold_baseline = threshold_val * baseline) %>%
-  filter(Biomass >= threshold_baseline) %>%
+  mutate(
+    threshold = threshold_val * baseline,
+    lower_bound = threshold * (1 - tolerance),
+    upper_bound = threshold * (1 + tolerance),
+    in_range = (Biomass >= lower_bound & Biomass <= upper_bound) | (Biomass >= baseline)
+  )
+
+# Use sliding window to detect first year with sufficient consecutive recovery
+recovery_baseline <- master_threshold %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(year) %>%
+  mutate(
+    recovered = slide_lgl(in_range, ~all(.x), .before = 0, .after = n_consecutive - 1)
+  ) %>%
+  filter(recovered) %>%
   slice_min(year, with_ties = FALSE) %>%
   ungroup() %>%
   mutate(Recovery_Time_Baseline = year - Crash_Year) %>%
   dplyr::select(HR, Crash_Year, Recovery_Time_Baseline)
 
+
 ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_Baseline, color = as.character(HR))) +
   geom_line(linewidth = 1,alpha = 0.4) +
   geom_point(size = 2,alpha = 0.4) +
-  geom_smooth(se = FALSE, linewidth = 0.75) +
+  # geom_smooth(se = FALSE, linewidth = 0.75) +
   geom_hline(yintercept = 20, linetype = "dashed") +
   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +  # y-axis starts at 0
@@ -82,143 +98,23 @@ ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_Baseline, color 
   theme(legend.position = "top") +
   NULL
 
-recovery_baseline <- master %>%
-  filter(year <= 2099) %>%
-  mutate(threshold = threshold_val * baseline) %>%
-  group_by(HR, Crash_Year) %>%
-  group_split()
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 rolling MSY.png",
+       dpi = 1200,width = 25,unit = "cm",bg = "white")
 
-recovery_time_df <- data.frame(crash_year = numeric(),
-                               HR = numeric(),
-                               recovery_time = numeric())
-
-# Loop over each element in recovery_baseline (assumed to be a list of data.frames grouped by HR and crash)
-for (i in seq_along(recovery_baseline)) {
-  current <- recovery_baseline[[i]]
-
-  recovered <- FALSE
-  for (j in seq_len(nrow(current))) {
-    if (current$Biomass[j] >= current$threshold[j]) {
-      # This year might be recovery — test the rest of the years
-      forward <- current[j:nrow(current), ]
-      prop_above <- mean(forward$Biomass >= forward$baseline)
-
-      if (prop_above >= 0.75) {
-        recovery_year <- current$year[j]
-        recovery_time <- recovery_year - current$Crash_Year[j]
-
-        recovery_time_df <- rbind(recovery_time_df, data.frame(
-          crash_year = current$Crash_Year[j],
-          HR = current$HR[j],
-          recovery_time = recovery_time
-        ))
-
-        recovered <- TRUE
-        break  # break inner loop once first recovery point is found
-      }
-    }
-  }
-
-  # Optional: if no recovery is found, you can store NA
-  if (!recovered) {
-    recovery_time_df <- rbind(recovery_time_df, data.frame(
-      crash_year = current$Crash_Year[1],
-      HR = current$HR[1],
-      recovery_time = NA
-    ))
-  }
-}
-
-# # THIS WON'T STAY
-# recovery_time_df$recovery_time[10] <- 16
-# recovery_time_df$recovery_time[7] <- 19
-# recovery_time_df$recovery_time[8] <- 18
-# recovery_time_df$recovery_time[39] <- 11
-# recovery_time_df$recovery_time[40] <- 16
-# recovery_time_df$recovery_time[26] <- 4
-# recovery_time_df$recovery_time[27] <- 11
-# recovery_time_df$recovery_time[28] <- 13
-# 
-ggplot(recovery_time_df, aes(x = crash_year, y = recovery_time, color = as.character(HR))) +
-  geom_line(linewidth = 1,alpha = 0.4) +
-  geom_point(size = 2,alpha = 0.4) +
-  geom_smooth(se = FALSE, linewidth = 0.75) +
-  geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +  # y-axis starts at 0
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "top") +
-  NULL
-# ggsave(paste0("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 REAL.png"),
-#        dpi = 1200,width = 25,unit = "cm",bg = "white")
-# 
-# # MSC
-# recovery_msc <- biomass_df %>%
-#   filter(year <= 2099) %>%
-#   group_by(HR, crash) %>%
-#   mutate(threshold_MSC = threshold_val * MSC) %>%
-#   filter(biomass >= threshold_MSC) %>%
-#   slice_min(year, with_ties = FALSE) %>%
-#   ungroup() %>%
-#   mutate(Recovery_Time_MSC = year - crash) %>%
-#   dplyr::select(HR, crash, Recovery_Time_MSC)
-# 
-# # combine and relabel
-# recovery_df <- recovery_baseline %>%
-#   full_join(recovery_msc, by = c("HR", "crash"))
-# 
-# 
-# base <- ggplot(recovery_df, aes(x = crash, y = Recovery_Time_Baseline, color = as.character(HR))) +
-#   geom_line(linewidth = 1) +
-#   geom_point(size = 2) +
-#   geom_smooth(se = FALSE, alpha = 0.4, linewidth = 0.5) +
-#   geom_hline(yintercept = 20, linetype = "dashed") +
-#   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
-#   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +  # y-axis starts at 0
-#   theme_minimal(base_size = 14) +
-#   theme(legend.position = "top") +
-#   NULL
-# 
-# base
-# 
-# ggsave(paste0("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3.png"),
-#        dpi = 1200,width = 25,unit = "cm",bg = "white")
-# 
-# MSC <- ggplot(recovery_df, aes(x = crash, y = Recovery_Time_MSC, color = HR)) +
-#   geom_line(linewidth = 1.2) +
-#   geom_point(size = 2) +
-#   geom_point(size = 2) +
-#   geom_smooth(se = F,alpha = 0.4,linewidth = 0.5) +
-#   geom_hline(yintercept = 20,linetype = "dashed") +
-#   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate",
-#        title = "MSC Fishing Baseline") +
-#   theme_minimal(base_size = 14) +
-#   theme(legend.position = "top") +
-#   NULL
-# 
-# MSC
-# 
-# base + MSC + plot_layout(guides = "collect",axis_titles = "collect") & theme(legend.position = 'top')
-# 
-# ggsave(paste0("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 BASE MSC - ",threshold_val,".png"),
-#        dpi = 1200,width = 25,unit = "cm",bg = "white")
-
-# Plot with facet per crash year
-ggplot(master, aes(x = year, y = Biomass, color = as.character(HR))) +
-  geom_line() +
+ggplot() +
+  geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
+  geom_line(
+    data = baseline_df,
+    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 1
+  ) +
   # geom_smooth(se = FALSE) +
-  geom_line(
+  geom_ribbon(
     data = baseline_df,
-    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 0.6
-  ) +
-  geom_line(
-    data = baseline_df,
-    aes(x = year, y = MSC), linetype = "dashed", inherit.aes = FALSE,alpha = 0.2
-  ) +
+    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
     # title = "Demersal Fish Biomass Post-Crash by Crash Year and Harvest Rate",
-    x = "Year", y = "Biomass", color = "Harvest Rate"
+    x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
   ) +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_minimal() +

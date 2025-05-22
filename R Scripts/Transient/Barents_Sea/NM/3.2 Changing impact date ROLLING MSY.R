@@ -1,7 +1,6 @@
 ## Run transient dynamics, impact the system at 5 year intervals and time recovery.
 ## This script will pull the biomass of the impacts at various dates
-## v2 of function will take interval into the future map to make it a fair bit faster. Do all combinations and then future2map
-
+## Also calculates a rolling MSY for each interval
 
 #### Setup ####
 rm(list=ls())                                                                                              # Wipe the brain
@@ -20,7 +19,8 @@ master <- list(All_Results = list(),
                Network_Indicators = list(),
                Initial_Conditions = list(),
                Crash_year = list(),
-               Crash_HR = list()) #How are we going to save all of this?
+               Crash_HR = list(),
+               Flows = list()) #How are we going to save all of this?
 transient_years <- seq(2020,2099) # How far do we want to compute? +1 to account for previous 10 year crashes (with 5 being the interval size)
 
 
@@ -224,7 +224,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   model[["data"]][["physics.drivers"]] <- Physics_template
   
   ## calculate MSY for current interval
-  ycurve_res <- e2ep_run_ycurve(model,nyears = nyears,HRvector = seq(1,5,0.25),selection = "DEMERSAL")
+  ycurve_res <- e2ep_run_ycurve(model,nyears = nyears,HRvector = seq(1,5,0.2),selection = "DEMERSAL")
   
   ## one of these per interval
   ## extract MSY - highest point on curve for Demersal fish
@@ -406,6 +406,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
       master[["Biomasses"]][[paste0(interval)]][[paste0("HR = ",fishing[f])]][[paste0(interval + i)]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
       master[["Network_Indicators"]][[paste0(interval)]][[paste0("HR = ",fishing[f])]][[paste0(interval + i)]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
       master[["Crash_year"]] <- interval
+      master[["Flows"]][[paste0(interval)]][[paste0("HR = ",fishing[f])]][[paste0(interval + i)]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
 
       
       #Extract I.C
@@ -433,16 +434,10 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
 # nyears <- 1
 
 interval <- seq(2020,2085,5)
-# crash <- c(1,2.27,4.54) # baseline, MSY, 2x MSY
 transient_years <- seq(2020,2099)
-# interval_HR <- expand.grid(interval,crash)
-
 relax_values <- 0
-
 guilds_to_crash <- "Demersal_fish"
-
 nyears <- 50
-
 
 res <- future_map(.x = interval,
               ~ {
