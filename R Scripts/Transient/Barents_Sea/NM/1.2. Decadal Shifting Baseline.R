@@ -3,30 +3,27 @@
 ## Basically smooths the input data
 
 #### Setup ####
-rm(list=ls())                                                                                              # Wipe the brain
+rm(list=ls()) # reset
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate",
               "StrathE2EPolar","furrr","tictoc","progressr")    # List packages
 lapply(Packages, library, character.only = TRUE)   
 source("../@_Region_file_BS.R")
 handlers(global = T)
-handlers("cli")
+handlers("cli") # progress bar
 
-plan(multisession)
+plan(multisession,workers = availableCores()-1) # parallel processing is good, but not that good
 
-tic()
-
-Force <- "CNRM" # What forcing are we using? GFDL or CNRM
-ssp <- "ssp126" # What SSP are we using? ssp126 or ssp370                                                                      
+tic() # time
+                                                                    
 transient_years <- seq(2020,2099) # How far do we want to compute?
 
 e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
-  # pb <- txtProgressBar(min = 0, max = 100, style = 3)
   p <- progressr::progressor(along = transient_years)
   
   # Debugging
   # guilds_to_crash <- c("Demersal_fish")
-  # i <- 8
+  # i <- 78
   # hr_scale <- 0
   
   master <- list(All_Results = list(),
@@ -46,7 +43,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   
   # Set fishing to 0
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]]))
-  
+
   # Change target guild
   model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- rep(hr_scale,length(positions))
 
@@ -66,9 +63,9 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     arrange(Month) %>% 
     group_by(Month) %>% 
     summarise(mean_height = mean(Waves))# Arrange to match template
-  
+         
   My_atmosphere <- readRDS(stringr::str_glue("../Objects/Barents_Sea/NM/Atmospheric N deposition.rds")) %>%
-    # filter(Year %in% (transient_years[seq(i,i+10)])) %>%
+    filter(Year %in% seq(2010,max(.$Year))) %>%     
     group_by(Month, Oxidation_state, Shore,  Year) %>%
     summarise(Measured = sum(Measured, na.rm = T)) %>%                                              # Sum across deposition states
     summarise(Measured = mean(Measured, na.rm = T)) %>%                                             # Average over years
@@ -76,23 +73,30 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     pivot_wider(names_from = c(Shore, Oxidation_state), values_from = Measured) %>%                     # Spread to match template
     arrange(Month)
   
-  My_H_Flows <- readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
-    #filter(Year %in% transient_years[seq(i,i+10)]) %>%                                     # Limit to reference period
-    #filter(SSP %in% c(ssp)) %>% 
-    group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
-    summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
-    ungroup() %>% 
-    left_join(My_scale,by = join_by(Shore,slab_layer)) %>%                                                   # Attach compartment volumes
-    mutate(Flow = Flow/Volume) %>%                                            # Scale flows by compartment volume
-    mutate(Flow = abs(Flow * 86400)) %>%                                      # Multiply for total daily from per second, and correct sign for "out" flows
-    arrange(Month)         
+  My_SPM <- readRDS("../Objects/Barents_Sea/NM/Suspended particulate matter.rds") %>%
+    filter(between(Year, 2011, 2019)) %>%                                     # Limit to reference period
+    group_by(Shore, Month) %>%
+    summarise(SPM = mean(SPM, na.rm = T)) %>%                                 # Average by month across years
+    ungroup() %>%
+    arrange(Month)                                                            # Order by month to match template
+  
+  My_Rivers <- readRDS("../Objects/Barents_Sea/NM/River volume input.rds") %>%
+    filter(between(Year, 2011, 2019)) %>%                                     # Limit to reference period
+    group_by(Month) %>%
+    summarise(Runoff = mean(Runoff, na.rm = T)) %>%                           # Average by month across years
+    ungroup() %>%
+    arrange(as.numeric(Month))                                                # Order by month to match template
+  
+  My_Stress <- readRDS("../Objects/Barents_Sea/NM/Habitat disturbance.rds") %>%
+    mutate(Month = factor(Month, levels = month.name)) %>%                    # Set month as a factor for non-alphabetical ordering
+    arrange(Month)   
   
   NH4_boundary <- readRDS("../Objects/Barents_Sea/NM/River nitrate and ammonia.rds") %>% subset(select = c(Month,Ammonia))                                         # Read in NH4
   NO3_boundary <- readRDS("../Objects/Barents_Sea/NM/River nitrate and ammonia.rds") %>% subset(select = c(Month,Nitrate))                                        # Read in NO3
   
 
   for (i in 1:(length(transient_years))) {
-    model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 
+    model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # necessary evil
     My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%   
       filter(Year %in% seq(transient_years[i]-10,transient_years[i])) %>%    # Import data
       group_by(Month, Compartment, Variable) %>%                                                 # Average across years
@@ -107,17 +111,9 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
              #                 Measured)  # weight C : weight Chla, convert to moles of C, Redfield ratio atomic N to C 
       ) %>%
       pivot_wider(names_from = c(Compartment, Variable), names_sep = "_", values_from = Measured)
-
-    My_atmosphere <- readRDS(stringr::str_glue("../Objects/Barents_Sea/NM/Atmospheric N deposition.rds")) %>%
-      filter(Year %in% seq(2010,max(.$Year))) %>%     
-      group_by(Month, Oxidation_state, Shore,  Year) %>%
-      summarise(Measured = sum(Measured, na.rm = T)) %>%                                              # Sum across deposition states
-      summarise(Measured = mean(Measured, na.rm = T)) %>%                                             # Average over years
-      ungroup() %>%
-      pivot_wider(names_from = c(Shore, Oxidation_state), values_from = Measured) %>%                     # Spread to match template
-      arrange(Month)
     
     My_DIN_fix <- readRDS("../Objects/Barents_Sea/NM/Ammonia to DIN.rds")
+    
     Boundary_template <- model[["data"]][["chemistry.drivers"]]
     Boundary_new <- mutate(Boundary_template, 
                            so_nitrate = My_boundary_data$SO_DIN * (1-filter(My_DIN_fix, Depth_layer == "Shallow")$Proportion),
@@ -141,7 +137,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
                            si_atmammonia = My_atmosphere$Inshore_R, 
                            si_othernitrate = 0,
                            si_otherammonia = 0)
-    model[["data"]][["chemistry.drivers"]] <- Boundary_new
+    model[["data"]][["chemistry.drivers"]] <- Boundary_new # plug into se2ep
     
     #### Physics ####
     My_light <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
@@ -194,24 +190,6 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
                 Ice_Thickness = mean(Ice_Thickness_avg,na.rm = T),
                 Ice_Conc = mean(Ice_conc_avg,na.rm = T))
     
-    My_SPM <- readRDS("../Objects/Barents_Sea/NM/Suspended particulate matter.rds") %>%
-      filter(between(Year, 2011, 2019)) %>%                                     # Limit to reference period
-      group_by(Shore, Month) %>%
-      summarise(SPM = mean(SPM, na.rm = T)) %>%                                 # Average by month across years
-      ungroup() %>%
-      arrange(Month)                                                            # Order by month to match template
-    
-    My_Rivers <- readRDS("../Objects/Barents_Sea/NM/River volume input.rds") %>%
-      filter(between(Year, 2011, 2019)) %>%                                     # Limit to reference period
-      group_by(Month) %>%
-      summarise(Runoff = mean(Runoff, na.rm = T)) %>%                           # Average by month across years
-      ungroup() %>%
-      arrange(as.numeric(Month))                                                # Order by month to match template
-    
-    My_Stress <- readRDS("../Objects/Barents_Sea/NM/Habitat disturbance.rds") %>%
-      mutate(Month = factor(Month, levels = month.name)) %>%                    # Set month as a factor for non-alphabetical ordering
-      arrange(Month)                                                            # Arrange to match template
-    
     Physics_template <- model[["data"]][["physics.drivers"]]
     #not behaving, manually replace
     Physics_template$sslight <-  My_light$Measured
@@ -251,11 +229,11 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     model[["data"]][["physics.drivers"]] <- Physics_template
     
     results <- e2ep_run(model = model,
-                        nyears = 50)
+                        nyears = 1)
     
     #Pull everything we need
     # master[["All_Results"]][[paste0(transient_years[i])]] <- results
-    # master[["Flow_Matrices"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
+    master[["Flow_Matrices"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
     master[["Biomasses"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
     master[["Network_Indicators"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
 
@@ -270,7 +248,8 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                csv.output = F)[,1]
     # setTxtProgressBar(pb,i)
-    p(message = sprintf("Calculating %g", transient_years[i]))
+    p(message = paste0("PF Biomass: ", filter(results[["final.year.outputs"]][["mass_results_wholedomain"]],Description == "Planktivorous_fish")$Model_annual_mean," in ", transient_years[i]))
+    message()
 
   }
   return(master)
@@ -280,7 +259,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
 guild_to_crash <- c("Demersal_fish")
 hr_scale <- c(0)
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
-saveRDS(baselines,paste0("../Objects/Experiments/Baseline/Baseline_",hr_scale,"_fishing_",guild_to_crash,".RDS"))
+#saveRDS(baselines,paste0("../Objects/Experiments/Baseline/Baseline_",hr_scale,"_fishing_",guild_to_crash,"_1year.RDS"))
         
 # future_map(.x = c(0),.f = e2ep_transient_baseline,c("Demersal_fish"),.progress = T)
 toc()
