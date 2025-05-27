@@ -19,12 +19,17 @@ interval <- seq(2020,2085,5)
 
 all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS")
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
+baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
 
 baseline_df <- data.frame(
   year = transient_years[1:length(baseline[["Biomasses"]])],
   baseline = map_dbl(baseline[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
   mutate(MSC = baseline * 0.8)
 
+baseline_non_ss_df <- data.frame(
+  year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
+  baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
+  mutate(MSC = baseline * 0.8)
 
 master <- data.frame(Baseline = numeric(0),
                      MSC = numeric(0),
@@ -98,19 +103,23 @@ ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_Baseline, color 
   theme(legend.position = "top") +
   NULL
 
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 rolling MSY.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white")
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 rolling MSY.png",
+#        dpi = 1200,width = 25,unit = "cm",bg = "white")
 
 ggplot() +
-  geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
+  geom_line(data = filter(master,Crash_Year == 2020), aes(x = year, y = Biomass, color = as.character(HR))) +
   geom_line(
     data = baseline_df,
-    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 1
+    aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 1
   ) +
-  # geom_smooth(se = FALSE) +
-  geom_ribbon(
-    data = baseline_df,
-    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
+  geom_line(
+    data = baseline_non_ss_df,
+    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 1,color = "black"
+  ) +
+  # # geom_smooth(se = FALSE) +
+  # geom_ribbon(
+  #   data = baseline_df,
+  #   aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
     # title = "Demersal Fish Biomass Post-Crash by Crash Year and Harvest Rate",
@@ -122,7 +131,7 @@ ggplot() +
         legend.position = "top",
         legend.text = element_text(size = 12)) +
   NULL
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 rolling MSY.png",
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 rolling MSY BOTH 2020.png",
        dpi = 1200,width = 25,unit = "cm",bg = "white")
 # 
 # 
@@ -140,3 +149,32 @@ ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 rolling MSY.png",
 #   theme_minimal(base_size = 14) +
 #   theme(legend.position = "top") +
 #   NULL
+
+
+ggplot() +
+  geom_line(data = filter(master,Crash_Year == 2020 & HR == "2x MSY"), aes(x = year, y = Biomass, color = as.character(HR))) +
+  geom_line(
+    data = baseline_df,
+    aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 1
+  ) +
+  geom_line(
+    data = baseline_non_ss_df,
+    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 1,color = "black"
+  ) +
+  # # geom_smooth(se = FALSE) +
+  # geom_ribbon(
+  #   data = baseline_df,
+  #   aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
+  facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
+  labs(
+    # title = "Demersal Fish Biomass Post-Crash by Crash Year and Harvest Rate",
+    x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
+  ) +
+  scale_x_continuous(limits = c(2020,2099)) +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"),
+        legend.position = "top",
+        legend.text = element_text(size = 12)) +
+  NULL
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Experiment/Meeting/Attractors SS and transient.png",
+       dpi = 1200,width = 25,unit = "cm",bg = "white")
