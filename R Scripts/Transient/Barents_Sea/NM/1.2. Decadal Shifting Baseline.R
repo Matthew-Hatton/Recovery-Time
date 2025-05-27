@@ -96,7 +96,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   
 
   for (i in 1:(length(transient_years))) {
-    # model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8
+    model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8
     My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%   
       filter(Year %in% seq(transient_years[i]-10,transient_years[i])) %>%    # Import data
       group_by(Month, Compartment, Variable) %>%                                                 # Average across years
@@ -228,8 +228,14 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     ## Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
-    results <- e2ep_run(model = model,
-                        nyears = 1)
+    if (i == 1) {
+      results <- e2ep_run(model = model,
+                          nyears = 50) # run to steady state first time
+    } else {
+      results <- e2ep_run(model = model,
+                          nyears = 1) # run transient for rest
+    }
+
     
     #Pull everything we need
     # master[["All_Results"]][[paste0(transient_years[i])]] <- results
@@ -248,8 +254,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                csv.output = F)[,1]
     # setTxtProgressBar(pb,i)
-    p(message = paste0("PF Biomass: ", filter(results[["final.year.outputs"]][["mass_results_wholedomain"]],Description == "Planktivorous_fish")$Model_annual_mean," in ", transient_years[i]))
-    message()
+    p()
 
   }
   return(master)
@@ -259,7 +264,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
 guild_to_crash <- c("Demersal_fish")
 hr_scale <- c(0)
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
-#saveRDS(baselines,paste0("../Objects/Experiments/Baseline/Baseline_",hr_scale,"_fishing_",guild_to_crash,"_1year.RDS"))
+saveRDS(baselines,paste0("../Objects/Experiments/Baseline/Baseline_",hr_scale,"_fishing_",guild_to_crash,"_1year.RDS"))
         
 # future_map(.x = c(0),.f = e2ep_transient_baseline,c("Demersal_fish"),.progress = T)
 toc()
