@@ -96,7 +96,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   
 
   for (i in 1:(length(transient_years))) {
-    model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # necessary evil
+    # model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8
     My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%   
       filter(Year %in% seq(transient_years[i]-10,transient_years[i])) %>%    # Import data
       group_by(Month, Compartment, Variable) %>%                                                 # Average across years
