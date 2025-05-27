@@ -81,11 +81,11 @@ My_Stress <- readRDS("../Objects/Barents_Sea/NM/Habitat disturbance.rds") %>%
 e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progress = NULL) { # Guilds will take a vector of names of guilds to crash
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   
-  interval <- seq(2020,2020,5)
-  transient_years <- seq(2020,2030)
-  relax_values <- 0
-  guilds_to_crash <- "Demersal_fish"
-  nyears <- 50
+  # interval <- seq(2020,2020,5)
+  # transient_years <- seq(2020,2030)
+  # relax_values <- 0
+  # guilds_to_crash <- "Demersal_fish"
+  # nyears <- 50
   
   model <- e2ep_read(model.name = "Barents_Sea",
                      model.variant = "2011-2019") # Read in new baseline model
@@ -242,7 +242,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   
   for (f in 1:length(fishing)) {
     ## DEBUG
-    f = 1
+    # f = 1
     ## Crash the system
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- fishing[f] # Set a HR for focal guild
