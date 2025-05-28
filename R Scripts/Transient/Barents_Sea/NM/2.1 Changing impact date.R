@@ -429,12 +429,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   
 }
 
-## TEST
-# interval <- seq(2020,2025,5)
-# transient_years <- seq(2020,2030)
-# relax_values <- 0
-# guilds_to_crash <- "Demersal_fish"
-# nyears <- 1
+## Relax to unfished
 
 interval <- seq(2020,2085,5)
 transient_years <- seq(2020,2099)
@@ -453,11 +448,8 @@ res <- future_map(.x = interval,
               .options = furrr_options(seed = TRUE),
               .progress = T)
 
-
-
-
-
 saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
+
 toc()
 
 
