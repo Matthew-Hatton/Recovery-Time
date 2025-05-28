@@ -8,19 +8,16 @@ library(tictoc)
 #### Batch process scripts ####
 
 scripts <- c(                                           # List scripts in the order you want to run them
-  #"./R scripts/NE/1.1 NE EXTRACT BARENTS_SEA.R",
-  #"./R scripts/NE/1.2 NE EXTRACT EAST_GREENLAND.R",
-  #"./R scripts/NE/2.1 NE EXTRACT ICE BARENTS_SEA.R",
-  #"./R scripts/NE/2.2 NE EXTRACT ICE EAST_GREENLAND.R",
-  # "./R scripts/NE/3.1 NE EXTRACT DAILY BARENTS_SEA.R",
-  # "./R scripts/NE/3.2 NE EXTRACT DAILY EAST_GREENLAND.R",
-  # "./R scripts/Transient/Barents_Sea/SSP126/1.1. Yearly Transients.R",
-  #"./R scripts/Transient/Barents_Sea/SSP126/1.2. Decadal Smoothed Transients.R",
-  # "./R scripts/Transient/Barents_Sea/SSP126/2.1. Yearly Shifting Baseline.R",
-  # "./R scripts/Transient/Barents_Sea/SSP126/2.2. Decadal Shifting Baseline.R"
-  #"./R scripts/Transient/Barents_Sea/SSP126/3. Plot shifting Baseline and Transients.R",
+  "./R scripts/Transient/Barents_Sea/NM/1.1. Decadal Smoothed Transients.R",
   "./R scripts/Transient/Barents_Sea/NM/1.2. Decadal Smoothed Transients.R",
-  "./R scripts/Transient/Barents_Sea/NM/2.2. Decadal Shifting Baseline.R"
+  "./R scripts/Transient/Barents_Sea/NM/2.1 Changing impact date.R",
+  "./R scripts/Transient/Barents_Sea/NM/2.2 Calculate Recovery Time of Impact Date.R",
+  "./R scripts/Transient/Barents_Sea/NM/3.1 Extract Bird Omnivory Index.R",
+  "./R scripts/Transient/Barents_Sea/NM/3.2 Flow into Birds.R",
+  "./R scripts/Transient/Barents_Sea/NM/3.3 Bird Biomass.R",
+  "./R scripts/Transient/Barents_Sea/NM/4.1. Coupled Effects Baseline.R",
+  "./R scripts/Transient/Barents_Sea/NM/4.2. Coupled Effects MSY.R",
+  "./R scripts/Transient/Barents_Sea/NM/4.3. Coupled Effects 2x_MSY.R"
 ) %>% 
   map(MiMeMo.tools::execute)                                                           # Run the scripts
 
