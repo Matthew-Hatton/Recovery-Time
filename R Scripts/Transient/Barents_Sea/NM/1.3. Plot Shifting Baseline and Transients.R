@@ -58,27 +58,35 @@ for (i in 1:length(all)) {
   }
 }
 
+master_2025 <- master %>% filter(Crash_Year == 2025)
+
 ggplot() +
-  geom_line(data = filter(master,Crash_Year == 2025), aes(x = year, y = Biomass, color = as.character(HR))) +
-  geom_line(
-    data = baseline_df,
-    aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 1
-  ) +
+  geom_line(data = master_2025, aes(x = year, y = Biomass, color = as.character(HR))) +
+  # geom_line(
+  #   data = baseline_df,
+  #   aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 1
+  # ) +
   geom_line(
     data = baseline_non_ss_df,
-    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 1,color = "black"
+    aes(x = year, y = baseline), inherit.aes = FALSE,alpha = 1,color = "black"
   ) +
+  geom_ribbon(data = baseline_non_ss_df,
+              aes(x = year,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),
+              alpha = 0.1) +
+  geom_vline(xintercept = c(2036,2046,2057),linetype = "dashed",alpha = 0.5) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
     x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
   ) +
-  scale_x_continuous(limits = c(2020,2099)) +
+  scale_x_continuous(limits = c(2020,2099),breaks = c(2020,2036,2040,2046,2057,2060,2080,2100)) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "top",
-        legend.text = element_text(size = 12)) +
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 8),
+        panel.grid.minor = element_blank()) +
   NULL
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 1.png",
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2/Figure 2.png",
        height = 1080,
        width = 1920,
        units = "px",
