@@ -62,18 +62,21 @@ master_2025 <- master %>% filter(Crash_Year == 2025)
 
 ggplot() +
   geom_line(data = master_2025, aes(x = year, y = Biomass, color = as.character(HR))) +
-  # geom_line(
-  #   data = baseline_df,
-  #   aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 1
-  # ) +
+  geom_line(
+    data = baseline_df,
+    aes(x = year, y = baseline), linetype = "dashed", inherit.aes = FALSE,alpha = 0.4
+  ) +
   geom_line(
     data = baseline_non_ss_df,
     aes(x = year, y = baseline), inherit.aes = FALSE,alpha = 1,color = "black"
   ) +
   geom_ribbon(data = baseline_non_ss_df,
-              aes(x = year,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),
-              alpha = 0.1) +
-  geom_vline(xintercept = c(2036,2046,2057),linetype = "dashed",alpha = 0.5) +
+              aes(x = year,ymin = baseline - (baseline * 0.05),ymax = baseline),
+              alpha = 0.2) +
+  geom_ribbon(data = baseline_non_ss_df,
+              aes(x = year,ymin = baseline - (baseline * 0.2),ymax = baseline),
+              alpha = 0.2) +
+  geom_vline(xintercept = c(2036,2046,2057),linetype = "solid",alpha = 0.6,color = c("#7CAE00","#00BFC4","#F8768D")) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
     x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
