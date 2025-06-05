@@ -70,10 +70,10 @@ bird_omniv <- ggplot() +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(x = "Year", y = "Bird Omnivory Index", color = "Harvest Rate"
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 14) +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "top",
-        legend.text = element_text(size = 12)) +
+        legend.text = element_text(size = 12),axis.text.x = element_text(size = 6)) +
   NULL
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5c Bird Omnivory Index.png",
        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_omniv)
@@ -105,7 +105,8 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   scale_y_continuous(limits = c(0, NA)) +  # y-axis starts at 0
   scale_x_continuous(limits = c(2020,2085)) +
   theme_minimal(base_size = 14) +
-  theme(legend.position = "top") +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 12)) +
   NULL
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5d Bird Omnivory Index Recovery.png",
        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_recovery)

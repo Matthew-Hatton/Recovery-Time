@@ -89,6 +89,7 @@ ggplot() +
         axis.text.x = element_text(size = 8),
         panel.grid.minor = element_blank()) +
   NULL
+
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2/Figure 2.png",
        height = 1080,
        width = 1920,
