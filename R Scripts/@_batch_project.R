@@ -18,8 +18,8 @@ scripts <- c(                                           # List scripts in the or
   # "./R scripts/Transient/Barents_Sea/NM/4.1. Coupled Effects Baseline.R",
   # "./R scripts/Transient/Barents_Sea/NM/4.2. Coupled Effects MSY.R",
   # "./R scripts/Transient/Barents_Sea/NM/4.3. Coupled Effects 2x_MSY.R",
-  "./R scripts/Transient/Barents_Sea/NM/5.1. Recovery time Extraction.R",
-  "./R scripts/Transient/Barents_Sea/NM/5.2 Catch Extraction.R"
+  #"./R scripts/Transient/Barents_Sea/NM/5.1.1 Recovery time Extraction.R",
+  "./R scripts/Transient/Barents_Sea/NM/5.2.1 Catch Extraction.R"
 ) %>% 
   map(MiMeMo.tools::execute)                                                           # Run the scripts
 
