@@ -243,9 +243,9 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   return(master)
 }
 # 
-transient_years <- seq(2010,2099) # How far do we want to compute?
+transient_years <- seq(2050,2099) # How far do we want to compute?
 relax_values <- 0
-crash <- seq(0,5.6,0.2) # baseline, MSY, 2x MSY
+crash <- seq(0,5.6,0.2) #2x MSY is 5.6
 guilds_to_crash <- "Demersal_fish"
 
 results_list <- future_map(crash,
@@ -254,7 +254,7 @@ results_list <- future_map(crash,
                                             crash = .x),
                            .options = furrr_options(seed = TRUE),
                            .progress = F)
-saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_MID.RDS"))
 # 
 # transient_years <- seq(2010,2020) # How far do we want to compute?
 # relax_values <- 0
