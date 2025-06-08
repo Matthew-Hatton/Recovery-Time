@@ -4,58 +4,53 @@ library(tidyverse)
 library(ggrepel)
 library(patchwork)
 
-recovery_time <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation.RDS")
-catch <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation.RDS")
+## present
+recovery_time <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_2020.RDS") %>% 
+  mutate(Decade = 2020)
+catch <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation.RDS") %>% 
+  mutate(Decade = 2020)
+## 2050
+recovery_time_mid <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_MID.RDS") %>% 
+  mutate(Decade = 2050)
+catch_mid <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation_MID.RDS") %>% 
+  mutate(Decade = 2050)
+## 2070
+recovery_time_2070 <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_2070.RDS") %>% 
+  mutate(Decade = 2070)
+catch_2070 <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation_2070.RDS") %>% 
+  mutate(Decade = 2070)
 
-merged <- cbind(recovery_time,catch) %>% 
-  subset(select = c(catch,recovery_time_baseline,HR,
-                    recovery_time_MSC))
+## combine data for plotting
+merged_2020 <- cbind(recovery_time,catch) %>% 
+  subset(select = c(catch,HR,
+                    Recovery_Time_MSC,Decade))
+
+merged_2050 <- cbind(recovery_time_mid,catch_mid) %>% 
+  subset(select = c(catch,HR,
+                    Recovery_Time_MSC,Decade))
+
+merged_2070 <- cbind(recovery_time_2070,catch_2070) %>% 
+  subset(select = c(catch,HR,
+                    Recovery_Time_MSC,Decade))
+
+merged <- rbind(merged_2020,merged_2050,merged_2070)
+
 
 merged$highlight <- NA
 merged$highlight[merged$HR == 1.0] <- "Baseline"
 merged$highlight[merged$HR == as.character(2.8)] <- "MSY"
 merged$highlight[merged$HR == 5.6] <- "2x MSY"
 
-merged$recovery_time_baseline[1] <- 0
-merged$recovery_time_MSC[1] <- 0
-
 merged$highlight <- factor(merged$highlight, levels = c("Baseline", "MSY", "2x MSY"))
 
-base <- ggplot(merged, aes(x = catch, y = recovery_time_baseline)) +
-  geom_point(color = "gray70", size = 3) +
-  geom_point(data = subset(merged, !is.na(highlight)),
-             aes(color = highlight), size = 5) +
+
+ggplot(data = merged,aes(x = catch,y = Recovery_Time_MSC,color = as.character(Decade))) +
+  geom_point() +
+  geom_hline(yintercept = 20,linetype = "dashed") +
   geom_text_repel(aes(label = round(HR, 2)), size = 3,max.overlaps = 20) +
-  geom_hline(yintercept = c(20),linetype = "dashed") +
-  scale_color_manual(
-    values = c("Baseline" = "#7CAE00", "MSY" = "#00BFC4", "2x MSY" = "#F8766D"),
-    na.value = "gray70",
-    name = "Fishing Standards"
-  ) +
-  theme_minimal(base_size = 14) +
-  labs(
-    x = "Catch",
-    y = "Recovery Time",
-    title = "Catch vs Recovery Time: Baseline"
-  )
-
-MSC <- ggplot(merged, aes(x = catch, y = recovery_time_MSC)) +
-  geom_point(color = "gray70", size = 3) +
-  geom_point(data = subset(merged, !is.na(highlight)),
-             aes(color = highlight), size = 5) +
-  geom_text_repel(aes(label = round(HR, 2)), size = 3,max.overlaps = 20) +
-  geom_hline(yintercept = c(20),linetype = "dashed") +
-  scale_color_manual(
-    values = c("Baseline" = "#7CAE00", "MSY" = "#00BFC4", "2x MSY" = "#F8766D"),
-    na.value = "gray70",
-    name = "Fishing Standards"
-  ) +
-  theme_minimal(base_size = 14) +
-  labs(
-    x = "Catch",
-    y = "Recovery Time",
-    title = "Catch vs Recovery Time: MSC Threshold"
-  )
-
-base + MSC
-
+  labs(color = "Decade",
+       x = "Demersal Catch (mmN/m^2)",
+       y = "Recovery Time (Years)") +
+  NULL
+ggsave("./Figures/Figure 5 Catch vs. Recovery Time.png",
+       dpi = 1200,width = 25,unit = "cm",bg = "white")

@@ -7,7 +7,7 @@ Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EP
 lapply(Packages, library, character.only = TRUE)   
 source("../@_Region_file_BS.R")
 
-plan(multisession) # parallel processing is good
+plan(multisession,workers = availableCores()-1) # parallel processing is good
 
 tic()
 master <- list(Biomasses = list(),
@@ -63,7 +63,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   #### Chemistry ####
   model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # Reset Wellmixed coefficient - issue is potentially something to do with this. let's turn it off for now
   My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%
-    filter(Year %in% seq(2010,2020)) %>%    # Import data
+    filter(Year %in% seq(2060,2070)) %>%    # Import data
     group_by(Month, Compartment, Variable) %>%                                                 # Average across years
     summarise(Measured = mean(Measured, na.rm = T)) %>%
     ungroup() %>%
@@ -108,21 +108,21 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   model[["data"]][["chemistry.drivers"]] <- Boundary_new
   #### Physics ####
   My_light <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
-    filter(Shore == "Combined" & Year %in% seq(2010,2020)) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
+    filter(Shore == "Combined" & Year %in% seq(2060,2070)) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
     group_by(Month) %>%  # Average across months
     summarise(Measured = mean(Measured, na.rm = T)) %>% 
     ungroup() %>% 
     arrange(Month)                                                            # Order to match template
   
   My_air_temp <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
-    filter(Shore %in% c("Inshore","Offshore") & Year %in% seq(2010,2020)) %>% 
+    filter(Shore %in% c("Inshore","Offshore") & Year %in% seq(2060,2070)) %>% 
     group_by(Month,Shore) %>% 
     summarise(Measured = mean(Measured)) %>% 
     ungroup() %>% 
     arrange(Month)
   
   My_H_Flows <- readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
-    filter(Year %in% seq(2010,2020)) %>%                                     # Limit to reference period
+    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
     group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
     summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
     ungroup() %>% 
@@ -133,14 +133,14 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   
   
   My_V_Flows <- readRDS("../Objects/Barents_Sea/NM/vertical diffusivity.rds") %>%
-    filter(Year %in% seq(2010,2020)) %>%                                     # Limit to reference period
+    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
     group_by(Month) %>% 
     summarise(V_diff = mean(Vertical_diffusivity, na.rm = T)) %>% 
     ungroup() %>% 
     arrange(Month)                                                            # Order by month to match template
   
   My_volumes <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
-    filter(Year %in% seq(2010,2020)) %>%                                     # Limit to reference period
+    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
     group_by(Compartment, Month) %>%                                          # By compartment and month
     summarise(across(c(DIN_avg,Phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
     ungroup() %>% 
@@ -148,7 +148,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   
   My_ice <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
     filter(Shore %in% c("Inshore","Offshore") & slab_layer == "S") %>%  # Remove Buffer Zone
-    filter(Year %in% seq(2010,2020)) %>%  # Filter down to just the target year
+    filter(Year %in% seq(2060,2070)) %>%  # Filter down to just the target year
     group_by(Month,Shore) %>% 
     summarise(Ice_Pres = mean(Ice_pres,na.rm = T),
               Snow_Thickness = mean(Snow_Thickness_avg,na.rm = T),
@@ -233,7 +233,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   return(master)
   p()
 }
-# 
+
 transient_years <- seq(2050,2099) # How far do we want to compute?
 relax_values <- 0
 crash <- seq(0,5.6,0.2) # 5.6 given as 2x MSY from experiment 2.1
@@ -246,10 +246,10 @@ results_list <- future_map(crash,
                            .options = furrr_options(seed = TRUE),
                            .progress = F)
 
-saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery_MID.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery_2070.RDS"))
 toc()
 
-# transient_years <- seq(2010,2020) # How far do we want to compute?
+# transient_years <- seq(2040,2050) # How far do we want to compute?
 # relax_values <- 0
 # crash <- seq(0,0.2,0.2) # baseline, MSY, 2x MSY
 # guilds_to_crash <- "Demersal_fish"

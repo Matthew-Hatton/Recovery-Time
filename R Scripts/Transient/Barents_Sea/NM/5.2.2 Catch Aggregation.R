@@ -6,7 +6,7 @@ library(tidyverse)
 
 # load
 HR <- seq(0, 5.6, 0.2)
-all_catch <- readRDS("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery.RDS")
+all_catch <- readRDS("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery_2070.RDS")
 
 # tag on HR
 all_catch <- map2(all_catch, HR, ~{ .x$HR <- .y; .x })
@@ -30,7 +30,7 @@ finished <- map_dfr(all_catch, function(current) {
   )
 })
 
-saveRDS(finished,"../Objects/Experiments/Crash/Paper/Crash_Aggregation.RDS")
+saveRDS(finished,"../Objects/Experiments/Crash/Paper/Crash_Aggregation_2070.RDS")
 
 ggplot(finished, aes(x = HR, y = catch)) +
   geom_point() +
