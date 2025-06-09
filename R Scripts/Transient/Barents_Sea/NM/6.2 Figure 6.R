@@ -148,7 +148,6 @@ biomass / landings_cumulative / landings_annual + plot_layout(guides = "collect"
 )
 
 
-
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 6/Figure 6.png",
        height = 1080,
        width = 1920,
