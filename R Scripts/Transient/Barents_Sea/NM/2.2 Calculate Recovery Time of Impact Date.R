@@ -61,6 +61,11 @@ for (i in 1:length(all)) {
                k == 1 ~ "Baseline",
                k == 2 ~ "MSY",
                k == 3 ~ "2x MSY"
+             ),
+             HR_num = case_when(
+               k == 1 ~ names(current)[k],
+               k == 2 ~ names(current)[k],
+               k == 3 ~ names(current)[k]
              ))
     base <- baseline_df %>% filter(year > interval[i])
     base_non_ss <- baseline_non_ss_df %>% filter(year > interval[i])
@@ -149,7 +154,7 @@ ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 Steady State Baseli
 
 
 ############ RECOVER TO NON-SS
-tolerance <- 0.05  # ±5%
+tolerance <- 0.2  # ±20%
 
 # Simplified recovery calculation
 recovery_baseline <- master %>%
@@ -173,21 +178,23 @@ non_ss_biomass <- ggplot() +
   ) +
   geom_ribbon(
     data = baseline_non_ss_df,
-    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
+    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.2),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
   ) +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"),
-        legend.position = "top",
-        legend.text = element_text(size = 12)) +
+        legend.position = "none",
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 6)) +
   NULL
 non_ss_biomass
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3a Biomass Transient Baseline.png",
        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = non_ss_biomass)
 
 
+recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
 non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = as.character(HR))) +
   geom_line(linewidth = 1,alpha = 1) +
   geom_point(size = 2,alpha = 1) +
@@ -203,8 +210,8 @@ non_ss_recovery
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3b Recovery Time Transient Baseline.png",
        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = non_ss_recovery)
 
-non_ss_biomass + non_ss_recovery
+non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 Transient Baseline.png",
-       dpi = 1200,width = 35,unit = "cm",bg = "white") # will need cleaning up for publication
+       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
 

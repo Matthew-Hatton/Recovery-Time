@@ -74,7 +74,7 @@ calculate_recovery_time <- function(all_file,
     geom_point() +
     geom_line() +
     labs(x = "Harvest Rate", y = "Recovery Time (years)",
-         title = paste("Recovery Time for", description)) +
+         title = paste("Recovery Time for", description,"in",start_year)) +
     theme_minimal(base_size = 14)
   
   return(p)
@@ -82,9 +82,9 @@ calculate_recovery_time <- function(all_file,
 
 
 calculate_recovery_time(
-  all_file = "../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2070.RDS",
+  all_file = "../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery.RDS",
   baseline_file = "../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS",
   description = "Demersal_fish",
-  threshold_multiplier = 1,
-  start_year = 2070
+  threshold_multiplier = 0.8,
+  start_year = 2020
 )
