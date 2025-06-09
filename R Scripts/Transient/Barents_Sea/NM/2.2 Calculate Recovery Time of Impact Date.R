@@ -124,9 +124,9 @@ ss_biomass <- ggplot() +
         legend.position = "top",
         legend.text = element_text(size = 12)) +
   NULL
-ss_biomass
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2a Recovery Time Steady State Baseline.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_biomass)
+# ss_biomass
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2a Recovery Time Steady State Baseline.png",
+#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_biomass)
 
 
 
@@ -142,14 +142,14 @@ ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_B
   theme_minimal(base_size = 14) +
   theme(legend.position = "top") +
   NULL
-ss_recovery
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2b Recovery Time Steady State Baseline.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_recovery)
+# ss_recovery
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2b Recovery Time Steady State Baseline.png",
+#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_recovery)
 
-ss_biomass + ss_recovery
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 Steady State Baseline.png",
-       dpi = 1200,width = 35,unit = "cm",bg = "white") # will need cleaning up for publication
-
+# ss_biomass + ss_recovery
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 Steady State Baseline.png",
+#        dpi = 1200,width = 35,unit = "cm",bg = "white") # will need cleaning up for publication
+# 
 
 
 
@@ -170,6 +170,11 @@ recovery_baseline <- master %>%
   ungroup() %>%
   dplyr::select(HR, Crash_Year, Recovery_Time)
 
+color_scale <- scale_color_manual(
+  values = c("Baseline" = "#1b9e77", "MSY" = "#7570b3", "2x MSY" = "#d95f02"),
+  name = "Harvest Rate"
+)
+
 non_ss_biomass <- ggplot() +
   geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
   geom_line(
@@ -178,40 +183,34 @@ non_ss_biomass <- ggplot() +
   ) +
   geom_ribbon(
     data = baseline_non_ss_df,
-    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.2),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
-  facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
-  labs(x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
-  ) +
+    aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline + (baseline * 0.05)), alpha = 0.1) +
+  facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x", strip.position = "top") +
+  labs(x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "none",
         legend.text = element_text(size = 12),
         axis.text.x = element_text(size = 6)) +
-  NULL
+  color_scale
 non_ss_biomass
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3a Biomass Transient Baseline.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = non_ss_biomass)
 
 
 recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
 non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = as.character(HR))) +
-  geom_line(linewidth = 1,alpha = 1) +
-  geom_point(size = 2,alpha = 1) +
-  # geom_smooth(se = FALSE, linewidth = 0.75) +
+  geom_line(linewidth = 1, alpha = 1) +
+  geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +  # y-axis starts at 0
+  labs(x = "Collapse Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
   theme_minimal(base_size = 14) +
   theme(legend.position = "top") +
-  NULL
+  color_scale
 
-non_ss_recovery
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3b Recovery Time Transient Baseline.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = non_ss_recovery)
 
 non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3 Transient Baseline.png",
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
 

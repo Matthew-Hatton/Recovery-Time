@@ -60,6 +60,12 @@ for (i in 1:length(all)) {
 
 master_2025 <- master %>% filter(Crash_Year == 2020)
 
+color_scale <- scale_color_manual(
+  values = c("Baseline" = "#1b9e77", "MSY" = "#7570b3", "2x MSY" = "#d95f02"),
+  name = "Harvest Rate",
+  breaks=c('Baseline', 'MSY', '2x MSY')
+)
+
 ggplot() +
   # geom_line(
   #   data = baseline_df,
@@ -75,14 +81,14 @@ ggplot() +
   geom_ribbon(data = baseline_non_ss_df,
               aes(x = year,ymin = MSC,ymax = baseline),
               alpha = 0.1) +
-  geom_line(data = master_2025, aes(x = year, y = Biomass, color = as.character(HR)),linewidth = 1.5) +
-  geom_vline(xintercept = c(2034,2044),linetype = "dashed",alpha = 0.8,color = c("#619CFF","#F8766D")) +
+  geom_line(data = master_2025, aes(x = year, y = Biomass, color = as.character(HR)),linewidth = 1.25) +
+  geom_vline(xintercept = c(2034,2044),linetype = "dashed",alpha = 0.8,color = c("#7570b3","#d95f02")) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
     x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
   ) +
   scale_x_continuous(limits = c(2020,2099),breaks = c(2020,2034,2040,2044,2060,2080,2100)) +
-  scale_color_discrete(breaks=c('Baseline', 'MSY', '2x MSY')) +
+  color_scale +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "top",
