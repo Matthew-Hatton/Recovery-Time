@@ -42,7 +42,7 @@ biomass <- ggplot() +
   # geom_line(data = consistent_fishing, aes(x = year, y = biomass),color = "#2DA6D2") +
   # geom_line(data = intermittent_fishing, aes(x = year, y = biomass),color = "#D2592D") + # these colors are nice, but not good for this stuff
   geom_line(data = fishing, aes(x = year, y = biomass,color = Harvest_Rate)) +
-  scale_color_manual(values = c("#00BA38","#2DA6D2")) +
+  scale_color_manual(values = c("#1b9e77","#7570b3")) +
   labs(
     x = "Year", y = "Demersal Fish Biomass",
     color = "Harvest Rate"
@@ -102,7 +102,7 @@ demersal_landings <- rbind(demersal_landings_consistent,
 landings_cumulative <- ggplot() +
   geom_line(data = demersal_landings, aes(x = year, y = cumulative_demersal_landings,color = Harvest_Rate)) +
   #geom_line(data = demersal_landings, aes(x = year, y = annual_demersal_landings,color = Harvest_Rate),alpha = 0.5) +
-  scale_color_manual(values = c("#00BA38","#2DA6D2")) +
+  scale_color_manual(values = c("#1b9e77","#7570b3")) +
   labs(
     x = "Year", y = "Cumulative\n Demersal Fish Landings",
     color = "Harvest Rate") +
@@ -119,7 +119,7 @@ landings_cumulative <- ggplot() +
 landings_annual <- ggplot() +
   #geom_line(data = demersal_landings, aes(x = year, y = cumulative_demersal_landings,color = Harvest_Rate)) +
   geom_line(data = demersal_landings, aes(x = year, y = annual_demersal_landings,color = Harvest_Rate)) +
-  scale_color_manual(values = c("#00BA38","#2DA6D2")) +
+  scale_color_manual(values = c("#1b9e77","#7570b3")) +
   labs(
     x = "Year", y = "Annual\n Demersal Fish Landings",
     color = "Harvest Rate") +
@@ -150,6 +150,14 @@ biomass / landings_cumulative / landings_annual + plot_layout(guides = "collect"
 
 
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 6/Figure 6.png",
+       height = 1080,
+       width = 1920,
+       units = "px",
+       dpi = 200,
+       bg = "white")
+
+## and if you're happy....
+ggsave("./Figures/Figure 6.png",
        height = 1080,
        width = 1920,
        units = "px",
