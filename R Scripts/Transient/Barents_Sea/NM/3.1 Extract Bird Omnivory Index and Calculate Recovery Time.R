@@ -58,6 +58,13 @@ for (i in 1:length(all)) {
   }
 }
 
+color_scale <- scale_color_manual(
+  values = c("Baseline" = "#1b9e77", "MSY" = "#7570b3", "2x MSY" = "#d95f02"),
+  name = "Harvest Rate"
+)
+
+master$HR <- factor(master$HR, levels=c('Baseline', 'MSY', '2x MSY')) # reorder legend
+
 bird_omniv <- ggplot() +
   geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
   geom_line(
@@ -65,21 +72,22 @@ bird_omniv <- ggplot() +
     aes(x = year, y = baseline), inherit.aes = FALSE,alpha = 1
   ) +
   geom_ribbon(data = baseline_df,
-              aes(x = year,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),
-              alpha = 0.2) +
+              aes(x = year,ymin = baseline - (baseline * 0.2),ymax = baseline + (baseline * 0.2)),
+              alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
+  color_scale +
   labs(x = "Year", y = "Bird Omnivory Index", color = "Harvest Rate"
   ) +
   theme_minimal(base_size = 14) +
   theme(strip.text = element_text(face = "bold"),
-        legend.position = "top",
+        legend.position = "none",
         legend.text = element_text(size = 12),axis.text.x = element_text(size = 6)) +
   NULL
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5c Bird Omnivory Index.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_omniv)
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5c Bird Omnivory Index.png",
+#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_omniv)
 
 ############ RECOVER TO BASELINE
-tolerance <- 0.05  # ±5% around the baseline
+tolerance <- 0.20  # ±5% around the baseline
 
 recovery_time <- master %>%
   group_by(HR, Crash_Year) %>%
@@ -100,7 +108,8 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   geom_line(linewidth = 1,alpha = 1) +
   geom_point(size = 2,alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate"
+  color_scale +
+  labs(x = "Collapse Year", y = "Recovery Time (Years)", color = "Harvest Rate"
   ) +
   scale_y_continuous(limits = c(0, NA)) +  # y-axis starts at 0
   scale_x_continuous(limits = c(2020,2085)) +
@@ -108,9 +117,9 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   theme(legend.position = "top",
         legend.text = element_text(size = 12)) +
   NULL
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5d Bird Omnivory Index Recovery.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_recovery)
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5d Bird Omnivory Index Recovery.png",
+#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_recovery)
 
 bird_omniv + bird_recovery
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5 Bird Omnivory and Recovery.png",
-       dpi = 1200,width = 35,unit = "cm",bg = "white") # will need cleaning up for publication
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4.png",
+       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
