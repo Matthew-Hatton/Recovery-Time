@@ -53,6 +53,7 @@ ggplot(data = merged,aes(x = catch,y = Recovery_Time_MSC,color = as.character(De
        y = "Recovery Time (Years)") +
   scale_color_manual(values = c("grey40","#592DD2","#D2592D")) +
   guides(colour = guide_legend(override.aes = list(size=4))) +
+  theme_minimal() +
   NULL
 ggsave("./Figures/Figure 5 Catch vs. Recovery Time.png",
        dpi = 1200,width = 30,height = 25,unit = "cm",bg = "white")
