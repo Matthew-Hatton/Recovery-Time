@@ -8,7 +8,7 @@ lapply(Packages, library, character.only = TRUE)
 source("../@_Region_file_BS.R")
 handlers(global = T)
 handlers("cli") # progress bar
-
+set.seed(0710)
 plan(multisession,workers = availableCores()-1) # parallel processing is good, but not that good
 
 tic() # time
@@ -18,7 +18,11 @@ B_msy_data <- readRDS("../Objects/Experiments/Intermittent_Consistent/Consistent
 B_msy <- data.frame(
   year = transient_years[1:length(B_msy_data[["Biomasses"]])],
   biomass = map_dbl(B_msy_data[["Biomasses"]], ~ .x$Model_annual_mean[27]))  # pulls a vector of biomasses as MSY - will need to calculate the B_trigger and B_stop values
-
+baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
+baseline_non_ss_df <- data.frame(
+  year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
+  baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
+  mutate(MSC = baseline * 0.8)
 
 e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
@@ -234,13 +238,22 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     ## Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
+
+    if (i == 1) {
+      results <- e2ep_run(model = model,
+                          nyears = 1) # run to s.s on first pass through
+    } else{
+      results <- e2ep_run(model = model,
+                          nyears = 1) # run transient
+    }
+
+    
     # Calculate B_trigger and B_fish - ICES standard deviation around the Biomass at MSY. 5th and 95th percentiles to find the trigger point and the stop point
     B_trigger <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.05)
-    B_fish <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.95)
+    B_fish <- baseline_non_ss_df$MSC[i] # allow recovery to MSC threshold
 
-    results <- e2ep_run(model = model,
-                        nyears = 1) # run transient
     
+    ## on years where we are fishing, we want to run to a steady state, on years where we're not, we want to run for just 1 year
     
     ## Change Fishing
     if (filter(results[["final.year.outputs"]][["mass_results_wholedomain"]],Description == guild_to_crash)$Model_annual_mean <= B_trigger & open == TRUE) {
@@ -284,9 +297,8 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   return(master)
 }
 
-
 guild_to_crash <- c("Demersal_fish")
-hr_scale <- c(2.6) # MEAN MSY
+hr_scale <- c(5.2) # MEAN MSY
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
 saveRDS(baselines,paste0("../Objects/Experiments/Intermittent_Consistent/Intermittent_",hr_scale,"x_fishing_",guild_to_crash,".RDS"))
 

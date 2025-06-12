@@ -5,13 +5,28 @@ library(patchwork)
 library(tidyverse)
 library(purrr)
 library(progressr)
+set.seed(0710)
 
 transient_years <- seq(2020,2099)
 
-all_fishing_consistent <- readRDS("../Objects/Experiments/Intermittent_Consistent/Consistent_1x_fishing_Demersal_fish.RDS")
-all_fishing_intermittent <- readRDS("../Objects/Experiments/Intermittent_Consistent/Intermittent_2.6x_fishing_Demersal_fish.RDS")
+all_fishing_consistent <- readRDS("../Objects/Experiments/Intermittent_Consistent/Intermittent_1x_fishing_Demersal_fish.RDS")
+all_fishing_intermittent_MSY <- readRDS("../Objects/Experiments/Intermittent_Consistent/Intermittent_2.6x_fishing_Demersal_fish.RDS")
+all_fishing_intermittent_2x_MSY <- readRDS("../Objects/Experiments/Intermittent_Consistent/Intermittent_5.2x_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
+B_msy_data <- readRDS("../Objects/Experiments/Intermittent_Consistent/Consistent_2.6x_fishing_Demersal_fish.RDS") 
+B_msy <- data.frame(
+  year = transient_years[1:length(B_msy_data[["Biomasses"]])],
+  biomass = map_dbl(B_msy_data[["Biomasses"]], ~ .x$Model_annual_mean[27]))  # pulls a vector of biomasses as MSY - will need to calculate the B_trigger and B_stop values
+bounds <- data.frame(year = transient_years,
+                     biomass = numeric(nrow(B_msy)),
+                     upper = numeric(nrow(B_msy)),
+                     lower = numeric(nrow(B_msy)))
 
+for (i in 1:(nrow(B_msy))) {
+  bounds$biomass[i] <- B_msy$biomass[i] # but this is B_msy
+  bounds$upper[i] = quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.95)
+  bounds$lower[i] = quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.05)
+}
 baseline_non_ss_df <- data.frame(
   year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
   baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
@@ -22,14 +37,25 @@ baseline_non_ss_df <- data.frame(
 consistent_fishing <- data.frame(
   year = transient_years[1:length(all_fishing_consistent[["Biomasses"]])],
   biomass = map_dbl(all_fishing_consistent[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% 
-  mutate(Harvest_Rate = "Consistent 2020s Fishing")
+  mutate(Harvest_Rate = "Baseline")
 
-intermittent_fishing <- data.frame(
-  year = transient_years[1:length(all_fishing_intermittent[["Biomasses"]])],
-  biomass = map_dbl(all_fishing_intermittent[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% 
-  mutate(Harvest_Rate = "Intermittent MSY")
+intermittent_fishing_MSY <- data.frame(
+  year = transient_years[1:length(all_fishing_intermittent_MSY[["Biomasses"]])],
+  biomass = map_dbl(all_fishing_intermittent_MSY[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% 
+  mutate(Harvest_Rate = "MSY")
 
-fishing <- rbind(consistent_fishing,intermittent_fishing)
+intermittent_fishing_2x_MSY <- data.frame(
+  year = transient_years[1:length(all_fishing_intermittent_2x_MSY[["Biomasses"]])],
+  biomass = map_dbl(all_fishing_intermittent_2x_MSY[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% 
+  mutate(Harvest_Rate = "2x MSY")
+
+fishing <- rbind(consistent_fishing,intermittent_fishing_MSY,intermittent_fishing_2x_MSY)
+color_scale <- scale_color_manual(
+  values = c("Baseline" = "#1b9e77", "MSY" = "#7570b3", "2x MSY" = "#d95f02"),
+  name = "Harvest Rate"
+)
+
+fishing$Harvest_Rate <- factor(fishing$Harvest_Rate, levels=c('Baseline', 'MSY', '2x MSY')) # reorder legend
 
 biomass <- ggplot() +
   geom_line(
@@ -41,8 +67,10 @@ biomass <- ggplot() +
               alpha = 0.1) +
   # geom_line(data = consistent_fishing, aes(x = year, y = biomass),color = "#2DA6D2") +
   # geom_line(data = intermittent_fishing, aes(x = year, y = biomass),color = "#D2592D") + # these colors are nice, but not good for this stuff
-  geom_line(data = fishing, aes(x = year, y = biomass,color = Harvest_Rate)) +
-  scale_color_manual(values = c("#1b9e77","#7570b3")) +
+  geom_line(data = fishing, aes(x = year, y = biomass,color = Harvest_Rate),linewidth = 0.9) +
+  # geom_line(data = baseline_non_ss_df,aes(x = year,y = MSC),linetype = "dashed",alpha = 0.6) +
+  geom_line(data = bounds,aes(x = year,y = lower),linetype = "dashed",alpha = 0.6) +
+  color_scale +
   labs(
     x = "Year", y = "Demersal Fish Biomass",
     color = "Harvest Rate"
@@ -67,22 +95,38 @@ years <- names(all_fishing_consistent$inshore_land_mat)
 demersal_landings_consistent <- map_dfr(years, function(yr) {
   inshore_mat <- all_fishing_consistent$inshore_land_mat[[yr]]
   offshore_mat <- all_fishing_consistent$offshore_land_mat[[yr]]
-  
-  total_landings <- sum(inshore_mat[demersal_rows, ], na.rm = TRUE) +
-    sum(offshore_mat[demersal_rows, ], na.rm = TRUE)
-  
-  data.frame(
-    year = as.integer(yr),
-    annual_demersal_landings = total_landings
-  )
-}) %>%
-  arrange(year) %>%
-  mutate(cumulative_demersal_landings = cumsum(annual_demersal_landings),
-         Harvest_Rate = "Consistent 2020s Fishing")
 
-demersal_landings_intermittent <- map_dfr(years, function(yr) {
-  inshore_mat <- all_fishing_intermittent$inshore_land_mat[[yr]]
-  offshore_mat <- all_fishing_intermittent$offshore_land_mat[[yr]]
+  total_landings <- sum(inshore_mat[demersal_rows, ], na.rm = TRUE) +
+    sum(offshore_mat[demersal_rows, ], na.rm = TRUE)
+
+  data.frame(
+    year = as.integer(yr),
+    annual_demersal_landings = total_landings
+  )
+}) %>%
+  arrange(year) %>%
+  mutate(cumulative_demersal_landings = cumsum(annual_demersal_landings),
+         Harvest_Rate = "Baseline")
+
+demersal_landings_intermittent_MSY <- map_dfr(years, function(yr) {
+  inshore_mat <- all_fishing_intermittent_MSY$inshore_land_mat[[yr]]
+  offshore_mat <- all_fishing_intermittent_MSY$offshore_land_mat[[yr]]
+
+  total_landings <- sum(inshore_mat[demersal_rows, ], na.rm = TRUE) +
+    sum(offshore_mat[demersal_rows, ], na.rm = TRUE)
+
+  data.frame(
+    year = as.integer(yr),
+    annual_demersal_landings = total_landings
+  )
+}) %>%
+  arrange(year) %>%
+  mutate(cumulative_demersal_landings = cumsum(annual_demersal_landings),
+         Harvest_Rate = "MSY")
+
+demersal_landings_intermittent_2x_MSY <- map_dfr(years, function(yr) {
+  inshore_mat <- all_fishing_intermittent_2x_MSY$inshore_land_mat[[yr]]
+  offshore_mat <- all_fishing_intermittent_2x_MSY$offshore_land_mat[[yr]]
   
   total_landings <- sum(inshore_mat[demersal_rows, ], na.rm = TRUE) +
     sum(offshore_mat[demersal_rows, ], na.rm = TRUE)
@@ -94,15 +138,17 @@ demersal_landings_intermittent <- map_dfr(years, function(yr) {
 }) %>%
   arrange(year) %>%
   mutate(cumulative_demersal_landings = cumsum(annual_demersal_landings),
-         Harvest_Rate = "Intermittent MSY")
+         Harvest_Rate = "2x MSY")
 
 demersal_landings <- rbind(demersal_landings_consistent,
-                           demersal_landings_intermittent)
+                           demersal_landings_intermittent_MSY,
+                           demersal_landings_intermittent_2x_MSY)
+demersal_landings$Harvest_Rate <- factor(demersal_landings$Harvest_Rate, levels=c('Baseline', 'MSY', '2x MSY')) # reorder legend
 
 landings_cumulative <- ggplot() +
-  geom_line(data = demersal_landings, aes(x = year, y = cumulative_demersal_landings,color = Harvest_Rate)) +
+  geom_line(data = demersal_landings, aes(x = year, y = cumulative_demersal_landings,color = Harvest_Rate),linewidth = 0.9) +
   #geom_line(data = demersal_landings, aes(x = year, y = annual_demersal_landings,color = Harvest_Rate),alpha = 0.5) +
-  scale_color_manual(values = c("#1b9e77","#7570b3")) +
+  color_scale +
   labs(
     x = "Year", y = "Cumulative\n Demersal Fish Landings",
     color = "Harvest Rate") +
@@ -118,8 +164,8 @@ landings_cumulative <- ggplot() +
 
 landings_annual <- ggplot() +
   #geom_line(data = demersal_landings, aes(x = year, y = cumulative_demersal_landings,color = Harvest_Rate)) +
-  geom_line(data = demersal_landings, aes(x = year, y = annual_demersal_landings,color = Harvest_Rate)) +
-  scale_color_manual(values = c("#1b9e77","#7570b3")) +
+  geom_line(data = demersal_landings, aes(x = year, y = annual_demersal_landings,color = Harvest_Rate),linewidth = 0.9) +
+  color_scale +
   labs(
     x = "Year", y = "Annual\n Demersal Fish Landings",
     color = "Harvest Rate") +
@@ -134,7 +180,7 @@ landings_annual <- ggplot() +
 # landings_annual
 
 biomass / landings_annual / landings_cumulative + plot_layout(guides = "collect", axes = "collect_x") + plot_annotation(
-  caption = "All values measured in mmN/m²",
+  caption = "Simulated dynamic fisheries closures. All values measured in mmN/m².",
   theme = theme(
     plot.title = element_text(size = 16, face = "bold"),
     plot.subtitle = element_text(size = 12)

@@ -232,7 +232,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     
     if (i == 1) {
       results <- e2ep_run(model = model,
-                          nyears = 50) # run to steady state first time
+                          nyears = 1) # run to steady state first time
     } else {
       results <- e2ep_run(model = model,
                           nyears = 1) # run transient for rest
