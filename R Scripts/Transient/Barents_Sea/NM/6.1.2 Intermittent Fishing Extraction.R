@@ -6,20 +6,25 @@ Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate",
               "StrathE2EPolar","furrr","tictoc","progressr")    # List packages
 lapply(Packages, library, character.only = TRUE)   
 source("../@_Region_file_BS.R")
-# handlers(global = T)
-# handlers("cli") # progress bar
+handlers(global = T)
+handlers("cli") # progress bar
 
 plan(multisession,workers = availableCores()-1) # parallel processing is good, but not that good
 
 tic() # time
 
 transient_years <- seq(2020,2099) # How far do we want to compute?
+B_msy_data <- readRDS("../Objects/Experiments/Intermittent_Consistent/Consistent_2.6x_fishing_Demersal_fish.RDS") 
+B_msy <- data.frame(
+  year = transient_years[1:length(B_msy_data[["Biomasses"]])],
+  biomass = map_dbl(B_msy_data[["Biomasses"]], ~ .x$Model_annual_mean[27]))  # pulls a vector of biomasses as MSY - will need to calculate the B_trigger and B_stop values
+
 
 e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   options(dplyr.summarise.inform = FALSE) # Turn off dplyr warnings
   p <- progressr::progressor(along = transient_years)
   
-  # Debugging
+  ## Debugging
   # guilds_to_crash <- c("Demersal_fish")
   # i <- 78
   # hr_scale <- 0
@@ -94,6 +99,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
   NH4_boundary <- readRDS("../Objects/Barents_Sea/NM/River nitrate and ammonia.rds") %>% subset(select = c(Month,Ammonia))                                         # Read in NH4
   NO3_boundary <- readRDS("../Objects/Barents_Sea/NM/River nitrate and ammonia.rds") %>% subset(select = c(Month,Nitrate))                                        # Read in NO3
   
+  open <- TRUE # start with the fishery open
   
   for (i in 1:(length(transient_years))) {
     model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8
@@ -228,18 +234,27 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     ## Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
+    # Calculate B_trigger and B_fish - ICES standard deviation around the Biomass at MSY. 5th and 95th percentiles to find the trigger point and the stop point
+    B_trigger <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.05)
+    B_fish <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.95)
+
+    results <- e2ep_run(model = model,
+                        nyears = 1) # run transient
+    
+    
     ## Change Fishing
-    if (i %% 5 == 0 | i == 1) { # if on a fifth year (or i is 1 ie the first iteration)
-      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- rep(hr_scale,length(positions)) # switch fishing on to MSY#
-      results <- e2ep_run(model = model,
-                          nyears = 50) # run to steady state to feel fishing effects
-    } else {
-      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- rep(0,length(positions)) # else, switch it off completely
-      results <- e2ep_run(model = model,
-                          nyears = 1) # run transient for rest
+    if (filter(results[["final.year.outputs"]][["mass_results_wholedomain"]],Description == guild_to_crash)$Model_annual_mean <= B_trigger & open == TRUE) {
+      # close fishery until we reach B_fish
+      open <- FALSE
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- rep(0,length(positions))
     }
     
-    
+    if (filter(results[["final.year.outputs"]][["mass_results_wholedomain"]],Description == guild_to_crash)$Model_annual_mean >= B_fish & open == FALSE) {
+      # reopen fishery when we reach B_fish
+      open <- TRUE
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- rep(hr_scale,length(positions))
+    }
+
     # Pull everything we need
     master[["Biomasses"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
     

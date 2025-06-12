@@ -269,7 +269,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
 
 
 guild_to_crash <- c("Demersal_fish")
-hr_scale <- c(1)
+hr_scale <- c(2.6)
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
 saveRDS(baselines,paste0("../Objects/Experiments/Intermittent_Consistent/Consistent_",hr_scale,"x_fishing_",guild_to_crash,".RDS"))
 

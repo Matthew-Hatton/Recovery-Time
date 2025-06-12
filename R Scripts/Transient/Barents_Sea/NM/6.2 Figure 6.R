@@ -133,7 +133,7 @@ landings_annual <- ggplot() +
   NULL
 # landings_annual
 
-biomass / landings_cumulative / landings_annual + plot_layout(guides = "collect", axes = "collect_x") + plot_annotation(
+biomass / landings_annual / landings_cumulative + plot_layout(guides = "collect", axes = "collect_x") + plot_annotation(
   caption = "All values measured in mmN/m²",
   theme = theme(
     plot.title = element_text(size = 16, face = "bold"),
