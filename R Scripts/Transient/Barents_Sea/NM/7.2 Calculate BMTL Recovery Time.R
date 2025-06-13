@@ -85,7 +85,7 @@ MTL <- ggplot() +
   NULL
 MTL
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure X Biomass Weighted Ecosystem Mean Trophic Level.png",
-       dpi = 1200,width = 25,unit = "cm",bg = "white",plot = MTL)
+       dpi = 1200,width = 25,,height = 20, unit = "cm",bg = "white",plot = MTL)
 
 ############ RECOVER TO BASELINE
 tolerance <- 0.20  # ±5% around the baseline
