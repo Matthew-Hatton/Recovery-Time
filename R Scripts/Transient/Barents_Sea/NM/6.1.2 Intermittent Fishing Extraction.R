@@ -250,8 +250,8 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     
     # Calculate B_trigger and B_fish - ICES standard deviation around the Biomass at MSY. 5th and 95th percentiles to find the trigger point and the stop point
     B_trigger <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.05)
-    B_fish <- baseline_non_ss_df$MSC[i] # allow recovery to MSC threshold
-
+    # B_fish <- baseline_non_ss_df$MSC[i] # allow recovery to MSC threshold
+    B_fish <- quantile(rnorm(10000, mean=B_msy$biomass[i], sd=0.2),0.95) # allow recovery to 95th percentile threshold
     
     ## on years where we are fishing, we want to run to a steady state, on years where we're not, we want to run for just 1 year
     
@@ -300,7 +300,7 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
 guild_to_crash <- c("Demersal_fish")
 hr_scale <- c(5.2) # MEAN MSY
 baselines <- e2ep_transient_baseline(hr_scale = hr_scale,guilds_to_crash = guild_to_crash)
-saveRDS(baselines,paste0("../Objects/Experiments/Intermittent_Consistent/Intermittent_",hr_scale,"x_fishing_",guild_to_crash,".RDS"))
+saveRDS(baselines,paste0("../Objects/Experiments/Intermittent_Consistent/Intermittent_",hr_scale,"x_fishing_",guild_to_crash,"_95th_percentile.RDS"))
 
 # future_map(.x = c(0),.f = e2ep_transient_baseline,c("Demersal_fish"),.progress = T)
 toc()

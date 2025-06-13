@@ -30,7 +30,8 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
                  Flow_Matrices = list(),
                  Biomasses = list(),
                  Network_Indicators = list(),
-                 Initial_Conditions = list()) #How are we going to save all of this?
+                 Initial_Conditions = list(),
+                 BMTL = list()) #How are we going to save all of this?
   
   
   #### LOAD MODEL AND EXAMPLE FILES ####
@@ -242,7 +243,27 @@ e2ep_transient_baseline <- function(hr_scale,guilds_to_crash){
     master[["Flow_Matrices"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
     master[["Biomasses"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
     master[["Network_Indicators"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
-
+    trophics <- results[["final.year.outputs"]][["NetworkIndexResults"]]$NetworkData[18:33]
+    mean_ecosystem_trophic_level <- sum(trophics[1]*mean(c(results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[15],
+                                                           results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[16])),
+                                        trophics[2]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[17],
+                                        trophics[3]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[18],
+                                        trophics[4]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[19],
+                                        trophics[5]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[20],
+                                        trophics[6]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[21],
+                                        trophics[7]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[22],
+                                        trophics[8]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[23],
+                                        trophics[9]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[24],
+                                        trophics[10]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[25],
+                                        trophics[11]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[26],
+                                        trophics[12]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[27],
+                                        trophics[13]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[28],
+                                        trophics[14]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[29],
+                                        trophics[15]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[30],
+                                        trophics[16]*results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[31]
+    )/sum(results[["final.year.outputs"]][["mass_results_wholedomain"]]$Model_annual_mean[15:31])
+    
+    master[["BMTL"]][[paste0(transient_years[i])]] <- mean_ecosystem_trophic_level
 
     #Extract I.C
     init_con <- e2ep_extract_start(model = model,results = results,
