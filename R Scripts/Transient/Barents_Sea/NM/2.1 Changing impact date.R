@@ -223,21 +223,21 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   # Replace with new drivers
   model[["data"]][["physics.drivers"]] <- Physics_template
   
-  ## calculate MSY for current interval
-  ycurve_res <- e2ep_run_ycurve(model,nyears = nyears,HRvector = seq(1,5,0.2),selection = "DEMERSAL")
-  
-  ## one of these per interval
-  ## extract MSY - highest point on curve for Demersal fish
-  
-  focal <- ycurve_res %>% slice(which.max(.$DemFishland)) %>% 
-    dplyr::select(c(DemFishland,DemFishHRmult))
-  
-  ## above gives us the MSY we should use in the next step
-  MSY <- focal$DemFishHRmult
-  MSY_2x <- 2 * MSY
+  # ## calculate MSY for current interval
+  # ycurve_res <- e2ep_run_ycurve(model,nyears = nyears,HRvector = seq(1,5,0.2),selection = "DEMERSAL")
+  # 
+  # ## one of these per interval
+  # ## extract MSY - highest point on curve for Demersal fish
+  # 
+  # focal <- ycurve_res %>% slice(which.max(.$DemFishland)) %>% 
+  #   dplyr::select(c(DemFishland,DemFishHRmult))
+  # 
+  # ## above gives us the MSY we should use in the next step
+  # MSY <- focal$DemFishHRmult
+  # MSY_2x <- 2 * MSY
   
   ## then plug in
-  fishing <- c(1, MSY,MSY_2x)
+  fishing <- c(1, 2.8,5.6)
   # fishing <- c(1)
   
   for (f in 1:length(fishing)) {
@@ -448,8 +448,8 @@ res <- future_map(.x = interval,
               .options = furrr_options(seed = TRUE),
               .progress = T)
 
-saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
-
+# saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
+saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS"))
 toc()
 
 

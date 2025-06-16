@@ -44,16 +44,42 @@ merged$highlight[merged$HR == 5.6] <- "2x MSY"
 merged$highlight <- factor(merged$highlight, levels = c("Baseline", "MSY", "2x MSY"))
 
 
-ggplot(data = merged,aes(x = catch,y = Recovery_Time_MSC,color = as.character(Decade))) +
-  geom_point() +
-  geom_hline(yintercept = 20,linetype = "dashed") +
-  geom_text_repel(aes(label = round(HR, 2)), size = 3,max.overlaps = 20) +
+labelled_points <- merged[round(merged$HR, 1) %in% c(0, 1, 2.8, 5.6), ]
+
+
+ggplot(data = merged, aes(x = catch, y = Recovery_Time_MSC, color = as.character(Decade))) +
+  geom_hline(yintercept = 20, linetype = "dashed") +
+  
+  geom_path(
+    arrow = arrow(type = "closed", length = unit(0.15, "inches")),
+    lineend = "round"
+  ) +
+  
+  geom_point(
+    data = labelled_points,
+    aes(x = catch, y = Recovery_Time_MSC),
+    size = 2,
+    show.legend = FALSE
+  ) +
+  
+  geom_text_repel(
+    data = labelled_points,
+    aes(label = HR, color = as.character(Decade)),
+    size = 5,
+    max.overlaps = 10,
+    segment.color = "grey50"
+  ) +
+  
   labs(color = "Decade",
        x = "Demersal Catch (mmN/m²)",
        y = "Recovery Time (Years)") +
-  scale_color_manual(values = c("grey40","#592DD2","#D2592D")) +
-  guides(colour = guide_legend(override.aes = list(size=4))) +
-  theme_minimal() +
-  NULL
+  
+  scale_color_manual(values = c("grey40", "#592DD2", "#D2592D")) +
+  
+  # Override legend: smaller line and no point
+  guides(color = guide_legend(override.aes = list(size = 1.5, shape = NA))) +
+  
+  theme_minimal()
 ggsave("./Figures/Figure 5 Catch vs. Recovery Time.png",
        dpi = 1200,width = 30,height = 25,unit = "cm",bg = "white")
+

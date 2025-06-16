@@ -22,7 +22,9 @@ transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
 # load
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS")
+# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS")
+
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
 
@@ -152,7 +154,12 @@ ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_B
 # 
 
 
-
+master$HR <- factor(master$HR, levels=c('Baseline', 'MSY', '2x MSY')) # reorder legend
+master <- master %>% mutate(HR = case_when(
+  HR == "Baseline" ~ "2020s Baseline",
+  HR == "MSY" ~ "2020s MSY",
+  HR == "2x MSY" ~ "2020s 2x MSY"
+))
 ############ RECOVER TO NON-SS
 tolerance <- 0.2  # ±20%
 
@@ -170,38 +177,40 @@ recovery_baseline <- master %>%
   ungroup() %>%
   dplyr::select(HR, Crash_Year, Recovery_Time)
 
+
+
 color_scale <- scale_color_manual(
-  values = c("Baseline" = "#1b9e77", "MSY" = "#7570b3", "2x MSY" = "#d95f02"),
+  values = c("2020s Baseline" = "#1b9e77", "2020s MSY" = "#7570b3", "2020s 2x MSY" = "#d95f02"),
   name = "Harvest Rate"
 )
 
 non_ss_biomass <- ggplot() +
-  geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
+  geom_line(data = master, aes(x = year, y = Biomass, color = HR)) +
   geom_line(
     data = baseline_non_ss_df,
     aes(x = year, y = baseline),inherit.aes = FALSE,alpha = 0.6,color = "black"
   ) +
   geom_ribbon(
     data = baseline_non_ss_df,
-    aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline + (baseline * 0.05)), alpha = 0.1) +
+    aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x", strip.position = "top") +
-  labs(x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate") +
+  labs(x = "Release Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "none",
         legend.text = element_text(size = 12),
-        axis.text.x = element_text(size = 6)) +
+        axis.title.x = element_text(size = 14)) +
   color_scale
 non_ss_biomass
 
-
+recovery_baseline$HR <- factor(recovery_baseline$HR, levels=c('2020s Baseline', '2020s MSY', '2020s 2x MSY')) # reorder legend
 recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
 non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = as.character(HR))) +
   geom_line(linewidth = 1, alpha = 1) +
   geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Collapse Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
+  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
   theme_minimal(base_size = 14) +
@@ -213,4 +222,6 @@ non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
-
+## and if you're happy
+ggsave("./Figures/Figure 3.png",
+       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
