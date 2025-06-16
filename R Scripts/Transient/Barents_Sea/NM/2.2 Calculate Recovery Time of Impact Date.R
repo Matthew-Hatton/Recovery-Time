@@ -200,7 +200,8 @@ non_ss_biomass <- ggplot() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "none",
         legend.text = element_text(size = 12),
-        axis.title.x = element_text(size = 14)) +
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 6)) +
   color_scale
 non_ss_biomass
 
