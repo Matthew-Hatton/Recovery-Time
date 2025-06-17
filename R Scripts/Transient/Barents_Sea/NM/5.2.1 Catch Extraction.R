@@ -16,7 +16,8 @@ master <- list(Biomasses = list(),
                inshore_land_mat = list(),
                offshore_land_mat = list(),
                inshore_disc_mat = list(),
-               offshore_disc_mat = list()) #How are we going to save all of this?
+               offshore_disc_mat = list(),
+               Network_Indicators = list()) #How are we going to save all of this?
 
 #### LOAD MODEL AND EXAMPLE FILES ####
 model <- e2ep_read("Barents_Sea",
@@ -63,7 +64,7 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   #### Chemistry ####
   model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # Reset Wellmixed coefficient - issue is potentially something to do with this. let's turn it off for now
   My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%
-    filter(Year %in% seq(2060,2070)) %>%    # Import data
+    filter(Year %in% focal) %>%    # Import data
     group_by(Month, Compartment, Variable) %>%                                                 # Average across years
     summarise(Measured = mean(Measured, na.rm = T)) %>%
     ungroup() %>%
@@ -108,21 +109,21 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   model[["data"]][["chemistry.drivers"]] <- Boundary_new
   #### Physics ####
   My_light <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
-    filter(Shore == "Combined" & Year %in% seq(2060,2070)) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
+    filter(Shore == "Combined" & Year %in% focal) %>%               # Limit to reference period and variable - light only goes to 2019, so if past that, hold it at 2019 values
     group_by(Month) %>%  # Average across months
     summarise(Measured = mean(Measured, na.rm = T)) %>% 
     ungroup() %>% 
     arrange(Month)                                                            # Order to match template
   
   My_air_temp <- readRDS("../Objects/Barents_Sea/NM/Air temp and light.rds") %>% 
-    filter(Shore %in% c("Inshore","Offshore") & Year %in% seq(2060,2070)) %>% 
+    filter(Shore %in% c("Inshore","Offshore") & Year %in% focal) %>% 
     group_by(Month,Shore) %>% 
     summarise(Measured = mean(Measured)) %>% 
     ungroup() %>% 
     arrange(Month)
   
   My_H_Flows <- readRDS("../Objects/Barents_Sea/NM/H-Flows.rds") %>% 
-    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
+    filter(Year %in% focal) %>%                                     # Limit to reference period
     group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
     summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
     ungroup() %>% 
@@ -133,14 +134,14 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
   
   
   My_V_Flows <- readRDS("../Objects/Barents_Sea/NM/vertical diffusivity.rds") %>%
-    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
+    filter(Year %in% focal) %>%                                     # Limit to reference period
     group_by(Month) %>% 
     summarise(V_diff = mean(Vertical_diffusivity, na.rm = T)) %>% 
     ungroup() %>% 
     arrange(Month)                                                            # Order by month to match template
   
   My_volumes <- readRDS("../Objects/Barents_Sea/NM/TS.rds") %>% 
-    filter(Year %in% seq(2060,2070)) %>%                                     # Limit to reference period
+    filter(Year %in% focal) %>%                                     # Limit to reference period
     group_by(Compartment, Month) %>%                                          # By compartment and month
     summarise(across(c(DIN_avg,Phytoplankton_avg,Detritus_avg,Temperature_avg), mean, na.rm = T)) %>%         # Average across years for multiple columns
     ungroup() %>% 
@@ -228,13 +229,15 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
     
   master[["inshore_disc_mat"]] <- results[["final.year.outputs"]][["inshore_discmat"]]
   master[["offshore_disc_mat"]] <- results[["final.year.outputs"]][["offshore_discmat"]]
-    
+  master[["Network_Indicators"]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
   
   return(master)
   p()
 }
 
-transient_years <- seq(2050,2099) # How far do we want to compute?
+# focal <- seq(2010,2020) #for 2020s
+focal <- seq(2060,2070) #for 2050s
+# focal <- seq(2060,2070) #for 2070s
 relax_values <- 0
 crash <- seq(0,5.6,0.2) # 5.6 given as 2x MSY from experiment 2.1
 guilds_to_crash <- "Demersal_fish"
@@ -246,7 +249,7 @@ results_list <- future_map(crash,
                            .options = furrr_options(seed = TRUE),
                            .progress = F)
 
-saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery_2070.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Catch_Road_To_Recovery_",tail(focal,n=1),".RDS"))
 toc()
 
 # transient_years <- seq(2040,2050) # How far do we want to compute?

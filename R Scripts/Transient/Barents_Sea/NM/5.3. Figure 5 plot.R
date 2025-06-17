@@ -7,12 +7,12 @@ library(patchwork)
 ## present
 recovery_time <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_2020.RDS") %>% 
   mutate(Decade = 2020)
-catch <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation.RDS") %>% 
+catch <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation_2020.RDS") %>% 
   mutate(Decade = 2020)
 ## 2050
 recovery_time_mid <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_MID.RDS") %>% 
   mutate(Decade = 2050)
-catch_mid <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation_MID.RDS") %>% 
+catch_mid <- readRDS("../Objects/Experiments/Crash/Paper/Crash_Aggregation_2050.RDS") %>% 
   mutate(Decade = 2050)
 ## 2070
 recovery_time_2070 <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Aggregation_2070.RDS") %>% 
