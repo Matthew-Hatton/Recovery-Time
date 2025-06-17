@@ -200,14 +200,13 @@ non_ss_biomass <- ggplot() +
   theme(strip.text = element_text(face = "bold"),
         legend.position = "none",
         legend.text = element_text(size = 12),
-        axis.title.x = element_text(size = 14),
-        axis.text.x = element_text(size = 6)) +
+        axis.title.x = element_text(size = 14)) +
   color_scale
 non_ss_biomass
 
 recovery_baseline$HR <- factor(recovery_baseline$HR, levels=c('2020s Baseline', '2020s MSY', '2020s 2x MSY')) # reorder legend
 recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
-non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = as.character(HR))) +
+non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = (HR))) +
   geom_line(linewidth = 1, alpha = 1) +
   geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +

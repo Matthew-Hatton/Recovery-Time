@@ -27,7 +27,7 @@ long_data <- long_data %>%
   mutate(
     Value = ifelse(is.na(Value), 0, Value),
     Variable = case_when(
-      Variable == "DIN_avg" ~ "Dissolved Inorganic Nutrient (mmN/m^2)",
+      Variable == "DIN_avg" ~ "Dissolved Inorganic Nutrient (N mmol⋅m¯³)",
       Variable == "Ice_conc_avg" ~ "Ice Concentration (Proportion)",
       Variable == "Ice_pres" ~ "Ice Presence (Proportion)",
       Variable == "Ice_Thickness_avg" ~ "Ice Thickness (Meters)",
@@ -38,27 +38,28 @@ long_data <- long_data %>%
   )
 
 long_data$Variable <- factor(long_data$Variable, levels = c(
-  "Ice Concentration (Proportion)",        # top-left
-  "Seawater Temperature (Degrees C)",      # top-right
-  "Ice Thickness (Meters)",                 # bottom-left
-  "Dissolved Inorganic Nutrient (mmN/m^2)" # bottom-right
+  "Ice Concentration (Proportion)",        # top
+  "Ice Thickness (Meters)",                 # second
+  "Seawater Temperature (Degrees C)",      # third
+  "Dissolved Inorganic Nutrient (N mmol⋅m¯³)" # botto
 ))
 
 
 ggplot(filter(long_data,year >= 2020), aes(x = date, y = Value)) +
-
-  geom_line(color = "grey60") +
+  geom_line(color = "grey60",linewidth = 0.3) +
   geom_smooth(se = F,alpha = 0.3,color = "#4A8DB5") +
-  facet_wrap(~ Variable, scales = "free_y", ncol = 2,strip.position = "right") +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 1,strip.position = "right") +
   theme_linedraw() +
   labs(x = "Date",
        y = "Monthly Domain Average") +
   theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 8),
         strip.background = element_rect(fill = "white"),
-        strip.text = element_text(color = "black",size = 12),
+        strip.text = element_text(color = "black",size = 4),
         panel.grid.major.y = element_blank(),  # remove major y grid lines
         panel.grid.minor.y = element_blank()   # remove minor y grid lines (if any)
   )
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 1/Figure 1 Drivers.png",
-       dpi = 1200,
-       bg = "white",width = 25) #save out
+       bg = "white",width = 1240,height = 1754,units = "px") #save out
+ggsave("./Figures/Figure 1.png",
+       bg = "white",width = 1240,height = 1754,units = "px") #save out
