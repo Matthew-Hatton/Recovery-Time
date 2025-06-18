@@ -53,19 +53,10 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
               "Benthos_susp-dep","Benthos_carn-scav","Zooplankton_carn",
               "Birds","Pinnipeds","Cetaceans","Macrophytes")
   positions <- match(guilds_to_crash,guilds)
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- crash # Set a high HR for focal guild
-  print("Running Crashed System...")
-  results <- e2ep_run(model,nyears = 50) # Run model to s.s
-
-  model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
-                                                                 csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
-                                                                                                             csv.output = F)[,1] #plug in I.C to model
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Reset fishing
-  model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- relax # reset matched fishing to specific value
+  
   
   #### Iterate over different time periods ####
-  for (i in 2:(length(transient_years))) {
+  for (i in 1:(length(transient_years))) {
     #### Chemistry ####
     model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # Reset Wellmixed coefficient - issue is potentially something to do with this. let's turn it off for now
     My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%
@@ -219,18 +210,32 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
     # Replace with new drivers
     model[["data"]][["physics.drivers"]] <- Physics_template
     
-    results <- tryCatch({
-      e2ep_run(model = model, nyears = 1)
-    }, error = function(e) {
-      message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
-      #saveRDS(master,paste0("../Objects/Experiments/Crash/FAILED_AT_",transient_years[i],"Demersal_crash_",crash,"_relax_",relax,".RDS"))
-      return(master)
-    })
+    if (i == 1) {
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- crash # Set a high HR for focal guild
+      results <- e2ep_run(model,nyears = 50) # Run model to s.s
+      
+      model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
+                                                                     csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
+                                                                                                                 csv.output = F)[,1] #plug in I.C to model
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Reset fishing
+      model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- relax # reset matched fishing to specific value
+      
+    } else{
+      results <- tryCatch({
+        e2ep_run(model = model, nyears = 1)
+      }, error = function(e) {
+        message("\n An error occurred during e2ep_run: ", e$message,"\n Error occured at i = ",i,". Year = ",transient_years[i])
+        #saveRDS(master,paste0("../Objects/Experiments/Crash/FAILED_AT_",transient_years[i],"Demersal_crash_",crash,"_relax_",relax,".RDS"))
+        return(master)
+      })
+
+    }
     
     # Pull everything we need
     master[["Biomasses"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["mass_results_wholedomain"]]
     master[["Network_Indicators"]][[paste0(transient_years[i])]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
-
+    
     #Extract I.C
     init_con <- e2ep_extract_start(model = model,results = results,
                                    csv.output = F)
@@ -240,14 +245,15 @@ e2ep_transient <- function(relax,guilds_to_crash,crash) { # Guilds will take a v
     #Reinsert I.C
     model[["data"]][["initial.state"]][1:nrow(init_con)] <- e2ep_extract_start(model = model,results = results,
                                                                                csv.output = F)[,1]
+
   }
   p()
   return(master)
 }
-# 
+
 # transient_years <- seq(2020,2099) # How far do we want to compute?
-transient_years <- seq(2050,2099) # How far do we want to compute?
-# transient_years <- seq(2070,2099) # How far do we want to compute?
+# transient_years <- seq(2050,2099) # How far do we want to compute?
+transient_years <- seq(2070,2099) # How far do we want to compute?
 relax_values <- 0
 crash <- seq(0,5.6,0.2) #2x MSY is 5.6
 guilds_to_crash <- "Demersal_fish"
@@ -260,8 +266,8 @@ results_list <- future_map(crash,
                            .progress = F)
 
 # saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2020.RDS"))
-saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2050.RDS"))
-# saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2070.RDS"))
+# saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2050.RDS"))
+saveRDS(results_list,paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2070.RDS"))
 # 
 # transient_years <- seq(2010,2020) # How far do we want to compute?
 # relax_values <- 0

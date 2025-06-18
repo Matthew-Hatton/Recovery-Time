@@ -19,6 +19,14 @@ calculate_recovery_time <- function(all_file,
   transient_years <- seq(2020,2099)
   HR <- seq(0, 5.6, 0.2)
   
+  ## DEBUG
+  idx = 23
+  start_year = 2070
+  i = 29
+  threshold_multiplier = 0.8
+  all <- readRDS("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_2070.RDS")
+  baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
+  
   # Load input data
   all <- readRDS(all_file)
   baseline_non_ss <- readRDS(baseline_file)
@@ -29,14 +37,14 @@ calculate_recovery_time <- function(all_file,
   idx <- which(example_df$Description == description)
   if (length(idx) == 0) stop(paste("Description", description, "not found."))
   
-  # Create baseline time series and apply threshold
+  # Create baseline time series and apply threshold - baseline is correct
   baseline_df <- data.frame(
     year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
     baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ .x$Model_annual_mean[idx]),
     bird_omnivory = map_dbl(baseline_non_ss[["Network_Indicators"]], ~ .x$NetworkData[63])
   ) %>%
-    mutate(threshold = baseline * threshold_multiplier,
-           bird_thresh = bird_omnivory * threshold_multiplier)
+    mutate(threshold = baseline * threshold_multiplier) %>% 
+    filter(year > start_year)
   
   # Initialize output
   recovery_time <- data.frame(HR = rep(0, length(all)),
@@ -46,7 +54,7 @@ calculate_recovery_time <- function(all_file,
   # Run analysis with progress bar
   with_progress({
     p <- progressor(steps = length(all))
-    for (i in seq_along(all)) {
+    for (i in seq_along(all)) { #each loop is a single HR
       p()
       biomasses <- all[[i]]$Biomasses
       model_vals <- sapply(biomasses, function(df) df$Model_annual_mean[idx])
@@ -60,28 +68,27 @@ calculate_recovery_time <- function(all_file,
         recovery_time$Recovery_Time[i] <- which(model_vals >= baseline)[1]
       }
       
-      bird_omnivory <- all[[i]]$Network_Indicators # at harvest ratio e.g 0...
-      bird_vals <- sapply(bird_omnivory, function(df) df$NetworkData[63]) # this is the recovery of birds...
-      baseline_bird <- baseline_df$bird_thresh[(nrow(baseline_df) - (length(all) - 1)):nrow(baseline_df)] # let's compare that against the baseline...
+      n_years <- length(all[[i]]$Network_Indicators) # how many years are there
+      bird_vals <- sapply(all[[i]]$Network_Indicators, function(df) df$NetworkData[63]) # extract omnivory
+      baseline_bird <- tail(baseline_df$bird_omnivory, n_years) # extract the baseline values
+      years_vector <- tail(baseline_df$year, n_years) # take the years as well
       
-      recovery_time <- data.frame(bird_omnivory = bird_vals,
-                                  Crash_year = seq(2020,2085,5),
-                                  HR = HR[i]) %>%
-        mutate(
-          lower_bound = baseline_bird * threshold_multiplier,
-          upper_bound = baseline * 1.2,
-          in_band = bird_omnivory >= lower_bound & bird_omnivory <= upper_bound
-        ) %>%
-        summarise(
-          Recovery_Year = if (first(in_band)) first(year) else first(year[in_band]),
-          Recovery_Time = Recovery_Year - first(Crash_Year),
-          .groups = "drop"
-        ) %>% 
-        mutate(Recovery_Time = replace(Recovery_Time, Recovery_Time == 1, 0)) #cleanup
+      lower_bound <- baseline_bird * 0.8 # what's the bottom of our ribbon?
+      upper_bound <- baseline_bird * 1.2 # what's the top?
+      in_band <- bird_vals >= lower_bound & bird_vals <= upper_bound # which values are in there? ie recovery time = 0
       
+      # Assume crash year is 2020 (i.e., first year of trajectory)
+      crash_year <- start_year
       
-      #####
-      recovery_time$bird_recovery = .....
+      if (in_band[1]) {
+        recovery_time$Recovery_Time_bird[i] <- 0 # if first value is already in band, then we start recovered
+      } else if (any(in_band)) {
+        recovery_year <- years_vector[which(in_band)[1]] # recovery = first year in which we are in the band...
+        recovery_time$Recovery_Time_bird[i] <- recovery_year - crash_year # then time is that year - the year we crashed
+      } else {
+        recovery_time$Recovery_Time_bird[i] <- NA # else it doesn't recover
+      }
+      
     }
   })
   
@@ -112,7 +119,7 @@ calculate_recovery_time <- function(all_file,
   return(p + q)
 }
 
-map(c(2020, 2050, 2070), function(.x) {
+map(c(2070), function(.x) {
   calculate_recovery_time(
     all_file = paste0("../Objects/Experiments/Crash/Paper/Recovery_Time_Road_To_Recovery_",.x,".RDS"),
     baseline_file = "../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS",

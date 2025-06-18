@@ -92,8 +92,6 @@ bird_omniv <- ggplot() +
         axis.text.x = element_text(size = 6),
         strip.background = element_blank()) +
   NULL
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5c Bird Omnivory Index.png",
-#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_omniv)
 
 ############ RECOVER TO BASELINE
 tolerance <- 0.20  # ±5% around the baseline
@@ -127,8 +125,6 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   theme_bw(base_size = 14) +
   theme(legend.position = "top") +
   NULL
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5/Figure 5d Bird Omnivory Index Recovery.png",
-#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = bird_recovery)
 
 bird_omniv + bird_recovery
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4.png",

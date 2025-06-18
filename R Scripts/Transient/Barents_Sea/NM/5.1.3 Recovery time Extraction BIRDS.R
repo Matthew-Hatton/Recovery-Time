@@ -97,7 +97,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   positions <- match(guilds_to_crash,guilds) # match guild to crash
   
   # INTERVAL CRASH
-
+  
   
   model[["data"]][["physical.parameters"]][["xinshorewellmixedness"]] <- 1.8 # Reset Wellmixed coefficient
   My_boundary_data <- readRDS("../Objects/Barents_Sea/NM/Boundary measurements.rds") %>%
@@ -237,7 +237,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   # MSY_2x <- 2 * MSY
   
   ## then plug in
-  fishing <- c(1, 2.8,5.6)
+  fishing <- seq(0,5.6,0.2)
   
   for (f in 1:length(fishing)) {
     ## DEBUG
@@ -245,7 +245,12 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
     ## Crash the system
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- fishing[f] # Set a HR for focal guild
-    results <- e2ep_run(model,nyears = nyears) # Run model to s.s
+    if (f == 1) {
+      results <- e2ep_run(model,nyears = 1) # Run model for one year if not fishing so that lines match
+    } else{
+      results <- e2ep_run(model,nyears = nyears) # Run model to s.s
+    }
+
     
     model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                    csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
@@ -409,7 +414,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
       master[["Network_Indicators"]][[paste0(interval)]][[paste0("HR = ",fishing[f])]][[paste0(interval + i)]] <- results[["final.year.outputs"]][["NetworkIndexResults"]]
       master[["Crash_year"]] <- interval
       master[["Flows"]][[paste0(interval)]][[paste0("HR = ",fishing[f])]][[paste0(interval + i)]] <- results[["final.year.outputs"]][["flow_matrix_all_fluxes"]]
-
+      
       
       #Extract I.C
       init_con <- e2ep_extract_start(model = model,results = results,
@@ -421,34 +426,34 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
       # master[["Biomasses"]][[paste0(interval)]][["HR"]] <- fishing[f]
       
     }
-
+    
   }
   return(master)
-
+  
   
 }
 
 ## Relax to unfished
 
-interval <- seq(2020,2085,5)
+interval <- c(2020,2050,2070)
 transient_years <- seq(2020,2099)
 relax_values <- 0
 guilds_to_crash <- "Demersal_fish"
 nyears <- 50
 
 res <- future_map(.x = interval,
-              ~ {
-                
-                e2ep_transient_interval(relax = relax_values,
-                                        guilds_to_crash = guilds_to_crash,
-                                        interval = .x,
-                                        nyears = nyears)
-              },
-              .options = furrr_options(seed = TRUE),
-              .progress = T)
+                  ~ {
+                    
+                    e2ep_transient_interval(relax = relax_values,
+                                            guilds_to_crash = guilds_to_crash,
+                                            interval = .x,
+                                            nyears = nyears)
+                  },
+                  .options = furrr_options(seed = TRUE),
+                  .progress = T)
 
 # saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
-saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS"))
+saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/BIRD_OMNIVORY_EXTRACTION.RDS"))
 toc()
 
 
