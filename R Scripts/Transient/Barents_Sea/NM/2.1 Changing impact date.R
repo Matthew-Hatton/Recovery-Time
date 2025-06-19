@@ -7,8 +7,8 @@ rm(list=ls())                                                                   
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc","progressr")                     # List packages
 lapply(Packages, library, character.only = TRUE)   
 source("../@_Region_file_BS.R")
-handlers("cli")
-handlers(global = TRUE)
+# handlers("cli")
+# handlers(global = TRUE)
 
 plan(multisession,workers = availableCores()-1) # parallel processing is good
 
@@ -239,10 +239,14 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   ## then plug in
   fishing <- c(1, 2.8,5.6)
   
+  master_model <- model
+  
   for (f in 1:length(fishing)) {
     ## DEBUG
     # f = 1
     ## Crash the system
+    model <- master_model
+    
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- fishing[f] # Set a HR for focal guild
     results <- e2ep_run(model,nyears = nyears) # Run model to s.s
@@ -448,7 +452,7 @@ res <- future_map(.x = interval,
               .progress = T)
 
 # saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
-saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS"))
+saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS"))
 toc()
 
 

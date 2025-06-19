@@ -10,7 +10,7 @@ library(tictoc)
 scripts <- c(                                           # List scripts in the order you want to run them
   # "./R scripts/Transient/Barents_Sea/NM/1.1. Decadal Smoothed Transients.R",
   # "./R scripts/Transient/Barents_Sea/NM/1.2. Decadal Smoothed Transients.R",
-  # "./R scripts/Transient/Barents_Sea/NM/2.1 Changing impact date.R",
+  "./R scripts/Transient/Barents_Sea/NM/2.1 Changing impact date.R",
   # "./R scripts/Transient/Barents_Sea/NM/2.2 Calculate Recovery Time of Impact Date.R",
   # "./R scripts/Transient/Barents_Sea/NM/3.1 Extract Bird Omnivory Index.R",
   # "./R scripts/Transient/Barents_Sea/NM/3.2 Flow into Birds.R",
@@ -19,8 +19,9 @@ scripts <- c(                                           # List scripts in the or
   # "./R scripts/Transient/Barents_Sea/NM/4.2. Coupled Effects MSY.R",
   # "./R scripts/Transient/Barents_Sea/NM/4.3. Coupled Effects 2x_MSY.R",
   # "./R scripts/Transient/Barents_Sea/NM/5.1.1 Recovery time Extraction.R",
-  "./R scripts/Transient/Barents_Sea/NM/6.1.1 Consistent Fishing Extraction.R",
-  "./R scripts/Transient/Barents_Sea/NM/6.1.2 Intermittent Fishing Extraction.R"
+  # "./R scripts/Transient/Barents_Sea/NM/6.1.1 Consistent Fishing Extraction.R",
+  # "./R scripts/Transient/Barents_Sea/NM/6.1.2 Intermittent Fishing Extraction.R",
+  "./R scripts/Transient/Barents_Sea/NM/5.1.3 FIGURE 5 BIRD TRAJECTORY.R"
 ) %>% 
   map(MiMeMo.tools::execute)                                                           # Run the scripts
 

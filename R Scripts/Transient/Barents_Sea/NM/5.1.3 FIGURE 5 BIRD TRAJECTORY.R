@@ -7,8 +7,8 @@ rm(list=ls())                                                                   
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate","StrathE2EPolar","furrr","tictoc","progressr")                     # List packages
 lapply(Packages, library, character.only = TRUE)   
 source("../@_Region_file_BS.R")
-handlers("cli")
-handlers(global = TRUE)
+# handlers("cli")
+# handlers(global = TRUE)
 
 plan(multisession,workers = availableCores()-1) # parallel processing is good
 
@@ -239,19 +239,26 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   ## then plug in
   fishing <- seq(0,5.6,0.2)
   
+  master_model <- model # store an unaltered version
+  
   for (f in 1:length(fishing)) {
     ## DEBUG
     # f = 1
+    
+    # reset model back to first conditions
+    model <- master_model
+    
     ## Crash the system
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- fishing[f] # Set a HR for focal guild
-    results <- e2ep_run(model,nyears = nyears) # Run model to s.s
+    
+    results <- e2ep_run(model,nyears = nyears) # Run model to s.s with fishing
     
     model[["data"]][["initial.state"]][1:length(e2ep_extract_start(model = model,results = results,
                                                                    csv.output = F)[,1])] <- e2ep_extract_start(model = model,results = results,
                                                                                                                csv.output = F)[,1] #plug in I.C to model
     
-    ## Reset fishing within the system
+    ## turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) # Reset fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- relax # reset matched fishing to specific value
     
