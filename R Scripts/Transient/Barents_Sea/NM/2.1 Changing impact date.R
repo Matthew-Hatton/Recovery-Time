@@ -245,7 +245,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
     ## DEBUG
     # f = 1
     ## Crash the system
-    model <- master_model
+    model <- master_model # reset the model
     
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]] <- rep(0,length(model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]])) #turn off fishing
     model[["data"]][["fleet.model"]][["HRscale_vector_multiplier"]][positions] <- fishing[f] # Set a HR for focal guild

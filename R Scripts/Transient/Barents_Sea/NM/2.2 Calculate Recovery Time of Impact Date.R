@@ -23,20 +23,22 @@ interval <- seq(2020,2085,5)
 
 # load
 # all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS")
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
 
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
+focal <- "Demersal_fish"
+
 
 # extract
 baseline_df <- data.frame(
   year = transient_years[1:length(baseline[["Biomasses"]])],
-  baseline = map_dbl(baseline[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
+  baseline = map_dbl(baseline[["Biomasses"]], ~ filter(.x,Description == focal)$Model_annual_mean)) %>% #extract DF biomass
   mutate(MSC = baseline * 0.8)
 
 baseline_non_ss_df <- data.frame(
   year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
-  baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
+  baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ filter(.x,Description  == focal)$Model_annual_mean)) %>% #extract DF biomass
   mutate(MSC = baseline * 0.8)
 
 master <- data.frame(Baseline = numeric(0),
@@ -57,7 +59,7 @@ for (i in 1:length(all)) {
     hrs <- current[[k]]
     df <- data.frame(
       year = (interval[i] + 1):max(transient_years),
-      Biomass = map_dbl(hrs, ~ .x$Model_annual_mean[27])) %>% #extract DF biomass
+      Biomass = map_dbl(hrs, ~ filter(.x,Description == focal)$Model_annual_mean)) %>% #extract DF biomass
       mutate(Crash_Year = interval[i],
              HR = case_when(
                k == 1 ~ "Baseline",
@@ -196,11 +198,13 @@ non_ss_biomass <- ggplot() +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x", strip.position = "top") +
   labs(x = "Release Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
-  theme_minimal() +
+  theme_bw() +
   theme(strip.text = element_text(face = "bold"),
+        strip.background = element_blank(),
         legend.position = "none",
         legend.text = element_text(size = 12),
-        axis.title.x = element_text(size = 14)) +
+        axis.text.x = element_text(size = 8),
+        panel.grid.minor = element_blank()) +
   color_scale
 non_ss_biomass
 
@@ -213,15 +217,19 @@ non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Ti
   labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "top") +
+  theme_bw() +
+  theme(strip.text = element_text(face = "bold"),
+        strip.background = element_blank(),
+        legend.position = "top",
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 8),
+        panel.grid.minor = element_blank()) +
   color_scale
 
-
 non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3.png",
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
 ## and if you're happy
-ggsave("./Figures/Figure 3.png",
+ggsave("./Figures/Figure 3 V2.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")

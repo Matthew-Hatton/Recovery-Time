@@ -15,15 +15,16 @@ transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
 
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_Demersal.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
 example <- all[[1]][["Network_Indicators"]][["2020"]][["HR = 1"]][["2021"]] %>% 
   mutate(row_number = seq(1,nrow(.)))
+focal <- "benths_omnivoryindex"
 
 
 baseline_df <- data.frame(
   year = transient_years[1:length(baseline[["Biomasses"]])],
-  baseline = map_dbl(baseline[["Network_Indicators"]], ~ .x["bird_omnivoryindex",])
+  baseline = map_dbl(baseline[["Network_Indicators"]], ~ .x[focal,])
 )
 
 master <- data.frame(Baseline = numeric(0),
@@ -44,7 +45,7 @@ for (i in 1:length(all)) {
     hrs <- current[[k]]
     df <- data.frame(
       year = (interval[i] + 1):max(transient_years),
-      Biomass = map_dbl(hrs, ~ .x["bird_omnivoryindex",])) %>% #extract DF biomass
+      Biomass = map_dbl(hrs, ~ .x[focal,])) %>% #extract DF biomass
       mutate(Crash_Year = interval[i],
              HR = case_when(
                k == 1 ~ "Baseline",
@@ -127,8 +128,8 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   NULL
 
 bird_omniv + bird_recovery
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4.png",
-       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-
-ggsave("./Figures/Figure 4.png",
-       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4.png",
+#        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+# 
+# ggsave("./Figures/Figure 4.png",
+#        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
