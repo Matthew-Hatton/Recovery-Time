@@ -14,12 +14,11 @@ handlers("cli")
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
-
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
 example <- all[[1]][["Network_Indicators"]][["2020"]][["HR = 1"]][["2021"]] %>% 
   mutate(row_number = seq(1,nrow(.)))
-focal <- "benths_omnivoryindex"
+focal <- "bird_omnivoryindex"
 
 
 baseline_df <- data.frame(
@@ -79,7 +78,7 @@ bird_omniv <- ggplot() +
     aes(x = year, y = baseline), inherit.aes = FALSE,alpha = 1
   ) +
   geom_ribbon(data = baseline_df,
-              aes(x = year,ymin = baseline - (baseline * 0.2),ymax = baseline + (baseline * 0.2)),
+              aes(x = year,ymin = baseline,ymax = baseline + (baseline * 0.2)),
               alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   color_scale +
@@ -127,9 +126,12 @@ bird_recovery <- ggplot(recovery_time, aes(x = Crash_Year, y = Recovery_Time, co
   theme(legend.position = "top") +
   NULL
 
-bird_omniv + bird_recovery
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4.png",
+bird_omniv + 
+  bird_recovery +
+  NULL
+# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 4/Figure 4 V2.png",
 #        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-# 
+# # 
 # ggsave("./Figures/Figure 4.png",
 #        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+

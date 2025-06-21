@@ -1,8 +1,3 @@
-## Script to calculate Demersal stock recovery time using a rolling MSY value and different recovery conditions
-## Recovery conditions are:
-## Baseline (0 fishing) ran to a steady state each year - snapshot of ecosystem. Requires 5 consecutive years equal to or above baseline
-## Baseline (0 fishing) ran in transient mode - effects from 2020. Requires intersection
-
 rm(list = ls()) #reset
 
 # load packages
@@ -14,20 +9,62 @@ library(patchwork)
 library(slider)
 library(zoo)
 library(progressr)
-
+handlers(global = T)
 progressr::handlers("cli") # progress bars are nice
 
 # where are we calculating to?
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
-
-# load
-# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
+# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
 
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
-focal <- "Planktivorous_fish"
+# guilds <- c("Birds","Pinnipeds","Cetaceans","benths")
+guilds <- filter(all[[1]][["Biomasses"]][["2020"]][["HR = 1"]][["2021"]],Description %in% c(
+  # "Surface_layer_phytoplankton",
+  # "Deep_layer_phytoplankton",
+  "Omnivorous_zooplankton",
+  "Carnivorous_zooplankton",
+  "Benthos_susp/dep_feeders_larvae",
+  "Benthos_susp/dep_feeders",
+  "Benthos_carn/scav_feeders_larvae",
+  "Benthos_carn/scav_feeders",
+  # "Planktivorous_fish_larvae",
+  # "Planktivorous_fish",
+  "Migratory_fish",
+  # "Demersal_fish_larvae",
+  # "Demersal_fish",
+  "Birds",
+  "Pinnipeds",
+  "Cetaceans",
+  "Maritime_mammals"
+))$Description
+
+final_biomass <- data.frame(HR = numeric(0),
+                             Crash_Year = numeric(0),
+                             Biomass = numeric(0),
+                             Guild = character(0),
+                            baseline = numeric(0),
+                            HR_num = character(0),
+                            MSC = numeric(0),
+                            baseline_non_ss = numeric(0),
+                            year = numeric(0))
+
+final_recovery <- data.frame(HR = numeric(0),
+                     Crash_Year = numeric(0),
+                     Recovery_Time = numeric(0),
+                     Guild = character(0))
+final_baseline <- data.frame(year = numeric(0),
+                             baseline = numeric(0),
+                             MSC = numeric(0),
+                    Guild = character(0))
+guild_extraction <- function(guilds){
+  p <- progressr::progressor(along = transient_years)
+for (guild in guilds) {
+# load
+
+focal <- guild
 
 # extract
 baseline_df <- data.frame(
@@ -38,7 +75,10 @@ baseline_df <- data.frame(
 baseline_non_ss_df <- data.frame(
   year = transient_years[1:length(baseline_non_ss[["Biomasses"]])],
   baseline = map_dbl(baseline_non_ss[["Biomasses"]], ~ filter(.x,Description  == focal)$Model_annual_mean)) %>% #extract DF biomass
-  mutate(MSC = baseline * 0.8)
+  mutate(MSC = baseline * 0.8,
+         Guild = guild)
+
+final_baseline <- rbind(final_baseline,baseline_non_ss_df)
 
 master <- data.frame(Baseline = numeric(0),
                      MSC = numeric(0),
@@ -51,7 +91,7 @@ for (i in 1:length(all)) {
   ## DEBUG
   # i = 1
   current <- all[[i]][["Biomasses"]][[1]]
-
+  
   for (k in 1:3) {
     ## DEBUG
     # k=1
@@ -160,9 +200,10 @@ master <- master %>% mutate(HR = case_when(
   HR == "Baseline" ~ "2020s Baseline",
   HR == "MSY" ~ "2020s MSY",
   HR == "2x MSY" ~ "2020s 2x MSY"
-))
+),
+  Guild = guild)
 ############ RECOVER TO NON-SS
-tolerance <- 0.2  # ±20% for MSC
+tolerance <- 0.2  # ±20%
 
 # to fill in NA's
 all_combos <- master %>%
@@ -188,56 +229,113 @@ recovery_baseline <- all_combos %>%
 
 
 
-
 color_scale <- scale_color_manual(
   values = c("2020s Baseline" = "#1b9e77", "2020s MSY" = "#7570b3", "2020s 2x MSY" = "#d95f02"),
   name = "Harvest Rate"
 )
 
-non_ss_biomass <- ggplot() +
-  geom_line(data = master, aes(x = year, y = Biomass, color = HR)) +
-  geom_line(
-    data = baseline_non_ss_df,
-    aes(x = year, y = baseline),inherit.aes = FALSE,alpha = 0.6,color = "black"
-  ) +
-  geom_ribbon(
-    data = baseline_non_ss_df,
-    aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
-  facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x", strip.position = "top") +
-  labs(x = "Release Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate") +
-  scale_x_continuous(limits = c(2020,2099)) +
-  theme_bw() +
-  theme(strip.text = element_text(face = "bold"),
-        strip.background = element_blank(),
-        legend.position = "none",
-        legend.text = element_text(size = 12),
-        axis.text.x = element_text(size = 8),
-        panel.grid.minor = element_blank()) +
-  color_scale
-non_ss_biomass
 
 recovery_baseline$HR <- factor(recovery_baseline$HR, levels=c('2020s Baseline', '2020s MSY', '2020s 2x MSY')) # reorder legend
 recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
 
-non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = (HR))) +
-  geom_line(linewidth = 1, alpha = 1) +
-  geom_point(size = 2, alpha = 1) +
-  geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
-  scale_y_continuous(limits = c(0, NA)) +
-  scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
-  theme_bw() +
-  theme(strip.text = element_text(face = "bold"),
-        strip.background = element_blank(),
-        legend.position = "top",
-        legend.text = element_text(size = 12),
-        axis.text.x = element_text(size = 8),
-        panel.grid.minor = element_blank()) +
-  color_scale
+recovery_baseline <- recovery_baseline %>% 
+  mutate(Guild = guild)
 
-non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
+final_recovery <- rbind(final_recovery,recovery_baseline)
 
-# saveRDS(recovery_baseline,"../Objects/Experiments/Maximum recovery time/DF_Recovery_focal.rds")
+final_biomass <- rbind(final_biomass,master)
+p()
+}
+return(list(recovery = final_recovery,biomass = final_biomass))
+}
+
+final <- guild_extraction(guilds = guilds)
+final_recovery <- final[["recovery"]]
+final_biomass <- final[["biomass"]]
+
+
+# recovery <- ggplot() +
+#   # geom_line(data = final_baseline,aes(x = year,y = baseline)) +
+#   #geom_line(data = final_recovery,aes(x = Crash_Year,y = Recovery_Time,color = HR)) +
+#   geom_smooth(data = final_recovery,aes(x = Crash_Year,y = Recovery_Time,color = HR),se = F) +
+#   geom_hline(yintercept = 20) +
+#   facet_wrap(~ Guild) +
+#   color_scale
+
+
+# birds <- ggplot() +
+#   geom_line(data = filter(final_biomass,Guild == "Birds"), aes(x = year, y = Biomass, color = HR)) +
+#   geom_line(
+#     data = filter(final_biomass,Guild == "Birds"),
+#     aes(x = year, y = baseline_non_ss), inherit.aes = FALSE,alpha = 1
+#   ) +
+#   geom_ribbon(data = filter(final_biomass,Guild == "Birds"),
+#               aes(x = year,ymin = baseline_non_ss - (baseline_non_ss * 0.2),ymax = baseline_non_ss),
+#               alpha = 0.1) +
+#   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
+#   color_scale +
+#   scale_x_continuous(limits = c(2020,2099)) +
+#   labs(x = "Release Year", y = "Biomass", color = "Harvest Rate",title = "Birds"
+#   ) +
+#   theme_bw() +
+#   theme(strip.text = element_text(face = "bold"),
+#         legend.position = "top",
+#         legend.text = element_text(size = 12),
+#         axis.title.x = element_text(size = 14),
+#         axis.text.x = element_text(size = 6),
+#         strip.background = element_blank()) +
+#   NULL
+# 
+# cet <- ggplot() +
+#   geom_line(data = filter(final_biomass,Guild == "Cetaceans"), aes(x = year, y = Biomass, color = HR)) +
+#   geom_smooth(data = filter(final_biomass,Guild == "Cetaceans"), aes(x = year, y = Biomass, color = HR),se = F) +
+#   geom_line(
+#     data = filter(final_biomass,Guild == "Cetaceans"),
+#     aes(x = year, y = baseline_non_ss), inherit.aes = FALSE,alpha = 1
+#   ) +
+#   geom_ribbon(data = filter(final_biomass,Guild == "Cetaceans"),
+#               aes(x = year,ymin = baseline_non_ss - (baseline_non_ss * 0.2),ymax = baseline_non_ss),
+#               alpha = 0.1) +
+#   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
+#   color_scale +
+#   scale_x_continuous(limits = c(2020,2099)) +
+#   labs(x = "Release Year", y = "Biomass", color = "Harvest Rate",title = "Cetaceans"
+#   ) +
+#   theme_bw() +
+#   theme(strip.text = element_text(face = "bold"),
+#         legend.position = "top",
+#         legend.text = element_text(size = 12),
+#         axis.title.x = element_text(size = 14),
+#         axis.text.x = element_text(size = 6),
+#         strip.background = element_blank()) +
+#   NULL
+# 
+# pin <- ggplot() +
+#   geom_line(data = filter(final_biomass,Guild == "Pinnipeds"), aes(x = year, y = Biomass, color = HR)) +
+#   geom_line(
+#     data = filter(final_biomass,Guild == "Pinnipeds"),
+#     aes(x = year, y = baseline_non_ss), inherit.aes = FALSE,alpha = 1
+#   ) +
+#   geom_ribbon(data = filter(final_biomass,Guild == "Pinnipeds"),
+#               aes(x = year,ymin = baseline_non_ss - (baseline_non_ss * 0.2),ymax = baseline_non_ss),
+#               alpha = 0.1) +
+#   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
+#   color_scale +
+#   scale_x_continuous(limits = c(2020,2099)) +
+#   labs(x = "Release Year", y = "Biomass", color = "Harvest Rate",title = "Pinnipeds"
+#   ) +
+#   theme_bw() +
+#   theme(strip.text = element_text(face = "bold"),
+#         legend.position = "top",
+#         legend.text = element_text(size = 12),
+#         axis.title.x = element_text(size = 14),
+#         axis.text.x = element_text(size = 6),
+#         strip.background = element_blank()) +
+#   NULL
+# 
+# (birds + cet + pin) / recovery
+
+saveRDS(final_recovery,"../Objects/Experiments/Maximum recovery time/DF_Recovery_All_Upper.rds")
 # ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
 #        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 # 

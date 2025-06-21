@@ -237,8 +237,8 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
   # MSY_2x <- 2 * MSY
   
   ## then plug in
-  fishing <- c(1, 2.8,5.6)
-  
+  # fishing <- c(1, 2.8,5.6)
+  fishing <- c(1,1.5,3)
   master_model <- model
   
   for (f in 1:length(fishing)) {
@@ -437,7 +437,7 @@ e2ep_transient_interval <- function(relax,guilds_to_crash,interval,nyears,progre
 interval <- seq(2020,2085,5)
 transient_years <- seq(2020,2099)
 relax_values <- 0
-guilds_to_crash <- "Demersal_fish"
+guilds_to_crash <- "Planktivorous_fish"
 nyears <- 50
 
 res <- future_map(.x = interval,
@@ -451,8 +451,8 @@ res <- future_map(.x = interval,
               .options = furrr_options(seed = TRUE),
               .progress = T)
 
-# saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Demersal.RDS"))
-saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS"))
+saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS"))
+# saveRDS(res,paste0("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS"))
 toc()
 
 
