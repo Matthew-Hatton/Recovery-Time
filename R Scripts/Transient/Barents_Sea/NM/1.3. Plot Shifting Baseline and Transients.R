@@ -90,7 +90,7 @@ ggplot() +
   geom_vline(xintercept = c(2034,2044),linetype = "dashed",alpha = 0.8,color = c("#7570b3","#d95f02")) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
   labs(
-    x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate"
+    x = "Year", y = "Demersal Fish Biomass (N mmol⋅m¯³)", color = "Harvest Rate"
   ) +
   scale_x_continuous(limits = c(2020,2099),breaks = c(2020,2034,2040,2044,2060,2080,2100)) +
   color_scale +
