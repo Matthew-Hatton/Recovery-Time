@@ -130,21 +130,21 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
   # Grey open circles for Whole Ecosystem in NR pairs (even if Recovery_Time != 80)
   geom_point(
     data = facet %>% filter(pair_NR, Level == "Ecosystem Maximum", !NR_flag),
-    shape = 1, color = "grey30", size = 4, stroke = 1,
+    shape = 1, color = "grey30", size = 4, stroke = 1,alpha = 0.5,
     show.legend = FALSE
   ) +
   
   # Grey filled circles for Focal in NR pairs (and not 80)
   geom_point(
     data = facet %>% filter(pair_NR, Level == "Targetted Guild", !NR_flag),
-    shape = 16, color = "grey30", size = 4,
+    shape = 16, color = "grey30", size = 4,alpha = 0.5,
     show.legend = FALSE
   ) +
   
   # Grey crosses for all NR points
   geom_point(
     data = facet %>% filter(NR_flag),
-    shape = 4, color = "grey30", size = 4, stroke = 1,
+    shape = 4, color = "grey30", size = 4, stroke = 1,alpha = 0.8,
     show.legend = FALSE
   ) +
   
@@ -211,11 +211,11 @@ geom_segment(
 
 
 
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5.png",
+ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 6.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
  
 ## and if you're happy
-ggsave("./Figures/Figure 5.png",
+ggsave("./Figures/Figure 6.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
 
 
