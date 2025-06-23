@@ -11,8 +11,12 @@ PFish_Recovery <- readRDS("../Objects/Figure Compilation/PFish Recovery.RDS")
 DFish_Biomass + PFish_Biomass + plot_layout(guides = "collect") & theme(legend.position = "top")
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V3.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+ggsave("./Figures/Figure 3.png",
+       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
 
 DFish_Recovery + PFish_Recovery + plot_layout(guides = "collect") & theme(legend.position = "top")
 
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 4 V3.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+ggsave("./Figures/Figure 4.png",
+       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")

@@ -22,12 +22,13 @@ transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
 # load
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
-# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
+all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
 
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
-focal <- "Demersal_fish"
+# focal <- "Demersal_fish"
+focal <- "Planktivorous_fish"
 
 # extract
 baseline_df <- data.frame(
@@ -223,7 +224,7 @@ non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Ti
   geom_line(linewidth = 1, alpha = 1) +
   geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
+  labs(x = "Release Year", y = "Planktivorous Recovery Time (Years)", color = "Harvest Rate") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
   theme_bw() +
@@ -241,8 +242,8 @@ non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
-saveRDS(non_ss_biomass,"../Objects/Figure Compilation/DFish Biomass.RDS")
-saveRDS(non_ss_recovery,"../Objects/Figure Compilation/DFish Recovery.RDS")
+saveRDS(non_ss_biomass,"../Objects/Figure Compilation/PFish Biomass.RDS")
+saveRDS(non_ss_recovery,"../Objects/Figure Compilation/PFish Recovery.RDS")
 # 
 # ## and if you're happy
 # ggsave("./Figures/Figure 3 V2.png",
