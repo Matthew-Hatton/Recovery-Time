@@ -14,21 +14,29 @@ library(patchwork)
 library(slider)
 library(zoo)
 library(progressr)
+library(ggh4x)
+library(tictoc)
 
+tic()
 progressr::handlers("cli") # progress bars are nice
 
 # where are we calculating to?
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
-# load
-# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+focal <- "Demersal_fish"
+# focal <- "Planktivorous_fish"
 
+if (focal == "Demersal_fish") {
+  all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
+} else{
+  all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+}
+
+# load
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
-# focal <- "Demersal_fish"
-focal <- "Planktivorous_fish"
+
 
 # extract
 baseline_df <- data.frame(
@@ -108,59 +116,12 @@ recovery_baseline <- master_threshold %>%
   mutate(Recovery_Time_Baseline = year - Crash_Year) %>%
   dplyr::select(HR, Crash_Year, Recovery_Time_Baseline)
 
-## all year biomasses
-ss_biomass <- ggplot() +
-  geom_line(data = master, aes(x = year, y = Biomass, color = as.character(HR))) +
-  geom_line(
-    data = baseline_df,
-    aes(x = year, y = baseline), linetype = "solid", inherit.aes = FALSE,alpha = 0.6
-  ) +
-  geom_ribbon(
-    data = baseline_df,
-    aes(x = year, y = baseline,ymin = baseline - (baseline * 0.05),ymax = baseline + (baseline * 0.05)),alpha = 0.1) +
-  facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x",strip.position = "top") +
-  labs(x = "Year", y = "Demersal Fish Biomass (mmN/m2)", color = "Harvest Rate",
-       caption = "Recovery Time decreases here due to way in which recovery time is calculated.\n Large variation in baseline greatly affects recovery time."
-  ) +
-  scale_x_continuous(limits = c(2020,2099)) +
-  theme_minimal() +
-  theme(strip.text = element_text(face = "bold"),
-        legend.position = "top",
-        legend.text = element_text(size = 12)) +
-  NULL
-# ss_biomass
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2a Recovery Time Steady State Baseline.png",
-#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_biomass)
-
-
-
-ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time_Baseline, color = as.character(HR))) +
-  geom_line(linewidth = 1,alpha = 1) +
-  geom_point(size = 2,alpha = 1) +
-  # geom_smooth(se = FALSE, linewidth = 0.75) +
-  geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate",
-       caption = "Recovery Time decreases here due to way in which recovery time is calculated.\n Large variation in baseline greatly affects recovery time."
-  ) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +  # y-axis starts at 0
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "top") +
-  NULL
-# ss_recovery
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2b Recovery Time Steady State Baseline.png",
-#        dpi = 1200,width = 25,unit = "cm",bg = "white",plot = ss_recovery)
-
-# ss_biomass + ss_recovery
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 2 Steady State Baseline.png",
-#        dpi = 1200,width = 35,unit = "cm",bg = "white") # will need cleaning up for publication
-# 
-
 
 master$HR <- factor(master$HR, levels=c('Baseline', 'MSY', '2x MSY')) # reorder legend
 master <- master %>% mutate(HR = case_when(
-  HR == "Baseline" ~ "2020s Baseline",
-  HR == "MSY" ~ "2020s MSY",
-  HR == "2x MSY" ~ "2020s 2x MSY"
+  HR == "Baseline" ~ "Status Quo",
+  HR == "MSY" ~ "MSY",
+  HR == "2x MSY" ~ "Overfishing"
 ))
 ############ RECOVER TO NON-SS
 tolerance <- 0.2  # ±20% for MSC
@@ -191,10 +152,10 @@ recovery_baseline <- all_combos %>%
 
 
 color_scale <- scale_color_manual(
-  values = c("2020s Baseline" = "#1b9e77", "2020s MSY" = "#7570b3", "2020s 2x MSY" = "#d95f02"),
+  values = c("Status Quo" = "#1b9e77", "MSY" = "#7570b3", "Overfishing" = "#d95f02"),
   name = "Harvest Rate"
 )
-master$HR <- factor(master$HR, levels=c('2020s Baseline', '2020s MSY', '2020s 2x MSY')) # reorder legend
+master$HR <- factor(master$HR, levels=c('Status Quo', 'MSY', 'Overfishing')) # reorder legend
 non_ss_biomass <- ggplot() +
   geom_line(data = master, aes(x = year, y = Biomass, color = HR)) +
   geom_line(
@@ -217,19 +178,26 @@ non_ss_biomass <- ggplot() +
   color_scale
 non_ss_biomass
 
-recovery_baseline$HR <- factor(recovery_baseline$HR, levels=c('2020s Baseline', '2020s MSY', '2020s 2x MSY')) # reorder legend
+recovery_baseline$HR <- factor(recovery_baseline$HR, levels=c('Status Quo', 'MSY', 'Overfishing')) # reorder legend
 recovery_baseline$Recovery_Time <- recovery_baseline$Recovery_Time - 1
+
+if (focal == "Demersal_fish") {
+  recovery_baseline <- recovery_baseline %>% mutate(Guild = "Demersal fish")
+} else{
+  recovery_baseline <- recovery_baseline %>% mutate(Guild = "Planktivorous fish")
+}
 
 non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Time, color = (HR))) +
   geom_line(linewidth = 1, alpha = 1) +
   geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Planktivorous Recovery Time (Years)", color = "Harvest Rate") +
-  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
+  facet_wrap(~Guild,strip.position = "top") +
+  scale_y_continuous(limits = c(0, 60)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
   theme_bw() +
   theme(strip.text = element_text(face = "bold"),
-        strip.background = element_blank(),
+        strip.background = element_rect(color = "black",fill = NA),
         legend.position = "top",
         legend.text = element_text(size = 12),
         axis.text.x = element_text(size = 8),
@@ -242,9 +210,84 @@ non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
-saveRDS(non_ss_biomass,"../Objects/Figure Compilation/PFish Biomass.RDS")
-saveRDS(non_ss_recovery,"../Objects/Figure Compilation/PFish Recovery.RDS")
-# 
-# ## and if you're happy
-# ggsave("./Figures/Figure 3 V2.png",
-#        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
+if (focal == "Demersal_fish") {
+  saveRDS(non_ss_biomass,"../Objects/Figure Compilation/DFish Biomass.RDS")
+  saveRDS(non_ss_recovery,"../Objects/Figure Compilation/DFish Recovery.RDS")
+  
+}else {
+  saveRDS(non_ss_biomass,"../Objects/Figure Compilation/PFish Biomass.RDS")
+  saveRDS(non_ss_recovery,"../Objects/Figure Compilation/PFish Recovery.RDS")
+  
+}
+
+## Above is to make all ie. supp. figure.
+master <- master %>% filter(Crash_Year %in% c(2020,2050,2080))
+
+## Mark recovery Lines
+if (focal == "Demersal_fish") {
+  recovery_lines <- data.frame(Recovery_Year = c(NA,2027,2038,
+                                                 NA,2059,2068,
+                                                 2085,2095,NA),
+                               biomass_at_recovery = c(NA,7.604748,7.135959,
+                                                       NA,7.7590514,7.3678022,
+                                                       5.6549002,5.2099363,NA),
+                               Crash_Year = c(2020,2020,2020,
+                                              2050,2050,2050,
+                                              2080,2080,2080),
+                               HR = c("Status Quo","MSY","Overfishing",
+                                      "Status Quo","MSY","Overfishing",
+                                      "Status Quo","MSY","Overfishing"))
+  master <- master %>% mutate(Guild = "Demersal fish")
+} else{
+  recovery_lines <- data.frame(Recovery_Year = c(2027,2034,2052,
+                                                 2074,2091,NA,
+                                                 NA,NA,NA),
+                               biomass_at_recovery = c(4.8510161,4.3567740,3.6175656,
+                                                       2.25902898,1.13267874,NA,
+                                                       NA,NA,NA),
+                               Crash_Year = c(2020,2020,2020,
+                                              2050,2050,2050,
+                                              2080,2080,2080),
+                               HR = c("Status Quo","MSY","Overfishing",
+                                      "Status Quo","MSY","Overfishing",
+                                      "Status Quo","MSY","Overfishing"))
+  master <- master %>% mutate(Guild = "Planktivorous fish")
+}
+
+non_ss_biomass <- ggplot() +
+  geom_line(data = master, aes(x = year, y = Biomass, color = HR)) +
+  geom_line(
+    data = baseline_non_ss_df,
+    aes(x = year, y = baseline),inherit.aes = FALSE,alpha = 0.6,color = "black"
+  ) +
+  geom_ribbon(
+    data = baseline_non_ss_df,
+    aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
+  geom_segment(data = recovery_lines,aes(x = Recovery_Year,xend = Recovery_Year,y = 0,yend = biomass_at_recovery,color = HR),linetype = "dashed",show.legend = F) +
+  ggh4x::facet_grid2(Crash_Year ~ Guild, scales = "free", independent = "all") +
+  labs(x = "Release Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m¯³)"), color = "Harvest Rate") +
+  scale_x_continuous(limits = c(2020,2099)) +
+  theme_bw() +
+  theme(strip.text = element_text(face = "bold"),
+        strip.background = element_rect(color = "black",fill = NA),
+        legend.position = "top",
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 8),
+        panel.grid.minor = element_blank()) +
+  color_scale
+non_ss_biomass
+
+if (focal == "Demersal_fish") {
+  saveRDS(non_ss_biomass,"../Objects/Figure Compilation/DFish Biomass_main.RDS")
+  ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V3.png",
+         dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+  ggsave("./Figures/Figure 2.png",
+         dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+} else{
+  saveRDS(non_ss_biomass,"../Objects/Figure Compilation/PFish Biomass_main.RDS")
+  ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 4 V3.png",
+         dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+  ggsave("./Figures/Figure 3.png",
+         dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
+}
+toc()
