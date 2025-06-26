@@ -163,18 +163,18 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
   #   segment.color = "black"
   # ) +
 #median notch
-geom_segment(
-  data = median_points,
-  aes(
-    x = Crash_Year - 1,       # left end of horizontal line (adjust width here)
-    xend = Crash_Year + 1,    # right end of horizontal line
-    y = Median_Recovery,      # same y position for horizontal line
-    yend = Median_Recovery
-  ),
-  color = "black",
-  linewidth = 0.5,
-  inherit.aes = FALSE
-) +
+# geom_segment(
+#   data = median_points,
+#   aes(
+#     x = Crash_Year - 1,       # left end of horizontal line 
+#     xend = Crash_Year + 1,    # right end of horizontal line
+#     y = Median_Recovery,      # same y position for horizontal line
+#     yend = Median_Recovery
+#   ),
+#   color = "black",
+#   linewidth = 0.5,
+#   inherit.aes = FALSE
+# ) +
 # Add labels
   # geom_text(
   #   data = guild_labels,
