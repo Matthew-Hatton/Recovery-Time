@@ -41,7 +41,7 @@ long_data$Variable <- factor(long_data$Variable, levels = c(
   "Ice Concentration (Proportion)",        # top
   # "Ice Thickness (Meters)",                 # second
   "Seawater Temperature (Degrees C)",      # third
-  "DIN (N mmol⋅m¯³)" #bottom
+  "DIN (N mmol⋅m⁻³)" #bottom
 ))
 
 plt_data <- long_data %>% filter(year >= 2020) %>%
