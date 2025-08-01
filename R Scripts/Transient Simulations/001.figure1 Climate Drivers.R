@@ -1,4 +1,4 @@
-## Script to plot the model domain - potential Figure 1
+## Script to plot climate drivers - Figure 1
 
 #### Setup ####
 rm(list=ls()) # reset

@@ -54,18 +54,46 @@ for (i in seq_along(pf)) {
 master <- rbind(master_DF,master_PF)
 baseline <- rbind(baseline_non_ss_DF,baseline_non_ss_PF)
 
-
-
+# Define custom colors
+my_colors <- c(
+  "Flows" = "#132280",  # deep purple
+  "Boundary" = "#117733",  # green
+  "Light" = "#DDCC77",  # sand/yellow
+  "Temperature" = "#CC6677",  # reddish pink
+  "Ice" = "#88CCEE"   # sky blue
+)
 
 ggplot() +
-  geom_line(data = master,aes(x = year,y = baseline,color = as.character(hold))) +
-  geom_line(data = baseline,aes(x = year,y = baseline),linetype = "dashed") +
+  geom_line(data = master, aes(x = year, y = baseline, color = as.character(hold)),linetype = "dashed",linewidth = 1) +
+  geom_line(data = baseline, aes(x = year, y = baseline), linewidth = 1) +
   facet_wrap(~ species) +
-  labs(x = "Year",
-       y = "Biomass",
-       color = "Hold Constant")
+  scale_color_manual(values = my_colors) +  # apply the custom palette here
+  labs(
+    x = "Year",
+    y = "Unfished Biomass (N mmol⋅m⁻³)",
+    color = "Constant"
+  ) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    strip.background = element_blank(),
+    legend.position = "top",
+    legend.text = element_text(size = 12),
+    axis.text.x = element_text(size = 8),
+    panel.grid.minor = element_blank()
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=10))) +
+  NULL
+
 
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 2/Driver investigation.png",
+       height = 1080,
+       width = 1920,
+       units = "px",
+       dpi = 200,
+       bg = "white")
+
+ggsave("./Figures/Figure 5.png",
        height = 1080,
        width = 1920,
        units = "px",

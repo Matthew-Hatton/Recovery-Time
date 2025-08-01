@@ -13,7 +13,6 @@ library(ggrepel)
 
 progressr::handlers("cli") # progress bars are nice
 
-
 ## WHOLE ECOSYSTEM - PFISH
 pfish_all_upper <- readRDS("../Objects/Experiments/Maximum recovery time/PF_Recovery_All_Upper.rds")
 
@@ -161,29 +160,6 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
     segment.alpha = 1,
     segment.color = "black"
   ) +
-#median notch
-# geom_segment(
-#   data = median_points,
-#   aes(
-#     x = Crash_Year - 1,       # left end of horizontal line 
-#     xend = Crash_Year + 1,    # right end of horizontal line
-#     y = Median_Recovery,      # same y position for horizontal line
-#     yend = Median_Recovery
-#   ),
-#   color = "black",
-#   linewidth = 0.5,
-#   inherit.aes = FALSE
-# ) +
-# Add labels
-# geom_text(
-#   data = guild_labels,
-#   aes(x = Crash_Year, y = y, label = Guild),
-#   angle = 90,
-#   size = 2,
-#   vjust = 0.5,
-#   color = "black",
-#   inherit.aes = FALSE
-# ) +
   # Add label centered below the bracket
   geom_hline(yintercept = 20, linetype = "dashed") +
   scale_shape_manual(values = c("Targeted Guild" = 16, "Ecosystem Maximum" = 1)) +
@@ -206,9 +182,6 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
     legend.title = element_blank(),
     panel.grid.minor = element_blank()
   )
-
-
-
 
 ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication

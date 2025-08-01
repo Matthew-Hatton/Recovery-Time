@@ -148,7 +148,7 @@ recovery_results <- master %>%
 recovery_baseline <- all_combos %>%
   left_join(recovery_results, by = c("HR", "Crash_Year"))
 
-
+################################# SUPPLEMENTARY #################################
 
 
 color_scale <- scale_color_manual(
@@ -206,10 +206,6 @@ non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Ti
 
 non_ss_biomass + non_ss_recovery + plot_layout(guides = "auto")
 
-# saveRDS(recovery_baseline,"../Objects/Experiments/Maximum recovery time/DF_Recovery_focal.rds")
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
-       dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-
 if (focal == "Demersal_fish") {
   saveRDS(non_ss_biomass,"../Objects/Figure Compilation/DFish Biomass.RDS")
   saveRDS(non_ss_recovery,"../Objects/Figure Compilation/DFish Recovery.RDS")
@@ -220,7 +216,8 @@ if (focal == "Demersal_fish") {
   
 }
 
-## Above is to make all ie. supp. figure.
+################################# FIGURE 4 #################################
+
 master <- master %>% filter(Crash_Year %in% c(2020,2050,2080))
 
 ## Mark recovery Lines
