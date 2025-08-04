@@ -86,14 +86,14 @@ ggplot() +
   NULL
 
 
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 2/Driver investigation.png",
+ggsave("../Draft Figures/Transient/Barents_Sea/NM/Draft 2/Driver investigation.png",
        height = 1080,
        width = 1920,
        units = "px",
        dpi = 200,
        bg = "white")
 
-ggsave("./Figures/Figure 5.png",
+ggsave("./Figures/Figure 6.png",
        height = 1080,
        width = 1920,
        units = "px",
