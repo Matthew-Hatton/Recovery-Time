@@ -15,7 +15,7 @@ progressr::handlers("cli") # progress bars are nice
 # where are we calculating to?
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
-Focal <- "Demersal_fish"
+Focal <- "Planktivorous_fish"
 
 if(Focal == "Planktivorous_fish"){
   all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")

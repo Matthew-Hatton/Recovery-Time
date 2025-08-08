@@ -34,7 +34,22 @@ biomass_Pfish <- readRDS("../Objects/Experiments/Maximum recovery time/Whole_eco
       TRUE ~ Guild
     ))
 
-guilds <- unique(biomass_Dfish$Guild)
+guilds <- c( # switch on what you want
+            "Omnivorous_zooplankton",
+            "Carnivorous_zooplankton",
+            "Benthos_susp_dep_feeders_larvae",
+            "Benthos_susp_dep_feeders",
+            "Benthos_carn_scav_feeders_larvae",
+            "Benthos_carn_scav_feeders",
+            "Migratory_fish",
+            "Demersal_fish_larvae",
+            "Demersal_fish",
+            "Birds",
+            "Pinnipeds",
+            "Cetaceans",
+            "Maritime_mammals",
+            NULL
+            )
 
 for (i in guilds) {
   # i = guilds[[8]] # debug
@@ -62,8 +77,8 @@ for (i in guilds) {
     NULL
   
   pfish <- ggplot() +
-    geom_line(data = tmp_Dfish,aes(x = year,y = Biomass,color = as.character(HR))) +
-    geom_line(data = tmp_Dfish,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
+    geom_line(data = tmp_Pfish,aes(x = year,y = Biomass,color = as.character(HR))) +
+    geom_line(data = tmp_Pfish,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
     geom_ribbon(
       data = tmp_Dfish,
       aes(x = year, y = baseline_non_ss, ymin = baseline_non_ss - (baseline_non_ss * 0.2), ymax = baseline_non_ss), alpha = 0.1) +
@@ -80,8 +95,8 @@ for (i in guilds) {
     color_scale +
     NULL
   
-  ggsave(paste0("../Draft Figures/Supplementary/Demersal_fish Ecosystem Recovery Trajectory ",`i`,".png"),
+  ggsave(paste0("../Draft Figures/Supplementary/Demersal_fish/Demersal_fish Ecosystem Recovery Trajectory ",`i`,".png"),
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white",plot = dfish)
-  ggsave(paste0("../Draft Figures/Supplementary/Planktivorous_fish Ecosystem Recovery Trajectory ",`i`,".png"),
+  ggsave(paste0("../Draft Figures/Supplementary/Planktivorous_fish/Planktivorous_fish Ecosystem Recovery Trajectory ",`i`,".png"),
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white",plot = pfish)
 }

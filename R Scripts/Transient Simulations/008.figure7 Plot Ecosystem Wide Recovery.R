@@ -14,11 +14,15 @@ library(ggrepel)
 progressr::handlers("cli") # progress bars are nice
 
 ## WHOLE ECOSYSTEM - PFISH
-pfish_all_upper <- readRDS("../Objects/Experiments/Maximum recovery time/PF_Recovery_All_Upper.rds")
+pfish_all_upper <- readRDS("../Objects/Experiments/Maximum recovery time/Whole_ecosystem_Planktivorous_fish_Recovery.rds")
 
 # summarise this to take the maximum values each release year
 pfish_summary <- pfish_all_upper %>%
   group_by(HR, Crash_Year) %>%
+  mutate(Recovery_Time = case_when(
+    is.na(Recovery_Time) ~ 70,
+    TRUE ~ Recovery_Time
+  )) %>% 
   slice_max(Recovery_Time, with_ties = FALSE) %>%
   ungroup() %>% 
   mutate(Guild_Crash = "Planktivorous Fish",
@@ -36,6 +40,10 @@ dfish_all_upper <- readRDS("../Objects/Experiments/Maximum recovery time/DF_Reco
 # summarise this to take the maximum values each release year
 dfish_summary <- dfish_all_upper %>%
   group_by(HR, Crash_Year) %>%
+  mutate(Recovery_Time = case_when(
+    is.na(Recovery_Time) ~ 70,
+    TRUE ~ Recovery_Time
+  )) %>% 
   slice_max(Recovery_Time, with_ties = FALSE) %>%
   ungroup() %>% 
   mutate(Guild_Crash = "Demersal Fish",
@@ -104,7 +112,7 @@ facet$HR <- factor(facet$HR, levels=c('Status Quo', 'MSY', 'Overfishing')) # reo
 
 ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
   
-  # # Colored lines for non-NR pairs
+  # Colored lines for non-NR pairs
   geom_line(
     data = facet %>% filter(!pair_NR),
     aes(group = pair_id, color = HR),
@@ -126,17 +134,17 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
     size = 4
   ) +
   
-  # Grey open circles for Whole Ecosystem in NR pairs (even if Recovery_Time != 80)
+  # Grey open circles for Whole Ecosystem in NR pairs (even if Recovery_Time != 70)
   geom_point(
     data = facet %>% filter(pair_NR, Level == "Ecosystem Maximum", !NR_flag),
     shape = 1, color = "grey30", size = 4, stroke = 1,alpha = 0.5,
     show.legend = FALSE
   ) +
   
-  # Grey filled circles for Focal in NR pairs (and not 80)
+  # Grey filled circles for targeted in NR pairs (and not 70)
   geom_point(
     data = facet %>% filter(pair_NR, Level == "Targeted Guild", !NR_flag),
-    shape = 16, color = "grey30", size = 4,alpha = 0.5,
+    shape = 16, color = "grey30", size = 4,alpha = 0.75,
     show.legend = FALSE
   ) +
   
@@ -183,9 +191,9 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
     panel.grid.minor = element_blank()
   )
 
-ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5.png",
+ggsave("../Draft Figures/Transient/Barents_Sea/NM/Draft 2/Figure 7.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 
 ## and if you're happy
-ggsave("./Figures/Figure 5.png",
+ggsave("./Figures/Figure 7.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
