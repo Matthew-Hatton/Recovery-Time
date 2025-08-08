@@ -24,6 +24,7 @@ progressr::handlers("cli") # progress bars are nice
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
 
+##### SWITCH #####
 # focal <- "Demersal_fish"
 focal <- "Planktivorous_fish"
 
@@ -262,29 +263,31 @@ non_ss_biomass <- ggplot() +
     aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
   geom_segment(data = recovery_lines,aes(x = Recovery_Year,xend = Recovery_Year,y = 0,yend = biomass_at_recovery,color = HR),linetype = "dashed",show.legend = F) +
   ggh4x::facet_grid2(Crash_Year ~ Guild, scales = "free", independent = "all") +
-  labs(x = "Release Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m¯³)"), color = "Harvest Rate") +
+  labs(x = "Release Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m⁻³)"), color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_bw() +
-  theme(strip.text = element_text(face = "bold"),
+  theme(strip.text = element_text(face = "bold",size = 12),
         strip.background = element_rect(color = "black",fill = NA),
         legend.position = "top",
+        legend.title = element_text(size = 12),
         legend.text = element_text(size = 12),
-        axis.text.x = element_text(size = 8),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
         panel.grid.minor = element_blank()) +
   color_scale
 non_ss_biomass
 
 if (focal == "Demersal_fish") {
   saveRDS(non_ss_biomass,"../Objects/Figure Compilation/DFish Biomass_main.RDS")
-  ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V3.png",
+  ggsave("../Draft Figures/Transient/Barents_Sea/NM/Draft 2/Figure 3.png",
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-  ggsave("./Figures/Figure 2.png",
+  ggsave("./Figures/Figure 3.png",
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 } else{
   saveRDS(non_ss_biomass,"../Objects/Figure Compilation/PFish Biomass_main.RDS")
-  ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 4 V3.png",
+  ggsave("../Draft Figures/Transient/Barents_Sea/NM/Draft 2/Figure 4.png",
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-  ggsave("./Figures/Figure 3.png",
+  ggsave("./Figures/Figure 4.png",
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 }
 toc()
