@@ -15,12 +15,18 @@ progressr::handlers("cli") # progress bars are nice
 # where are we calculating to?
 transient_years <- seq(2020,2099)
 interval <- seq(2020,2085,5)
-all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
-# all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+Focal <- "Demersal_fish"
+
+if(Focal == "Planktivorous_fish"){
+  all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_and_MSY_Planktivorous.RDS")
+} else if(Focal == "Demersal_fish"){
+  all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
+} else{
+  message("Please choose a valid focal guild:\nDemersal_fish\nor\nPlanktivorous_fish")
+}
 
 baseline <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish.RDS")
 baseline_non_ss <- readRDS("../Objects/Experiments/Baseline/Baseline_0_fishing_Demersal_fish_1year.RDS")
-# guilds <- c("Birds","Pinnipeds","Cetaceans","benths")
 guilds <- filter(all[[1]][["Biomasses"]][["2020"]][["HR = 1"]][["2021"]],Description %in% c(
   # "Surface_layer_phytoplankton",
   # "Deep_layer_phytoplankton",
@@ -33,8 +39,8 @@ guilds <- filter(all[[1]][["Biomasses"]][["2020"]][["HR = 1"]][["2021"]],Descrip
   # "Planktivorous_fish_larvae",
   # "Planktivorous_fish",
   "Migratory_fish",
-  # "Demersal_fish_larvae",
-  # "Demersal_fish",
+  "Demersal_fish_larvae",
+  "Demersal_fish",
   "Birds",
   "Pinnipeds",
   "Cetaceans",
@@ -253,10 +259,5 @@ final <- guild_extraction(guilds = guilds)
 final_recovery <- final[["recovery"]]
 final_biomass <- final[["biomass"]]
 
-saveRDS(final_recovery,"../Objects/Experiments/Maximum recovery time/DF_Recovery_All_Upper.rds")
-# ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 3/Figure 3 V2.png",
-#        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
-# 
-# ## and if you're happy
-# ggsave("./Figures/Figure 3 V2.png",
-#        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
+saveRDS(final_recovery,paste0("../Objects/Experiments/Maximum recovery time/Whole_ecosystem_",Focal,"_Recovery.rds"))
+saveRDS(final_biomass,paste0("../Objects/Experiments/Maximum recovery time/Whole_ecosystem_",Focal,"_Biomass.rds"))

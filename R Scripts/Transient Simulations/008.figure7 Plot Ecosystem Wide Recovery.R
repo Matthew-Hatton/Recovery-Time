@@ -41,7 +41,7 @@ dfish_summary <- dfish_all_upper %>%
   mutate(Guild_Crash = "Demersal Fish",
          Level = "Ecosystem Maximum")
 
-## FOCAL - FISH
+## FOCAL - DFISH
 dfish_focal <- readRDS("../Objects/Experiments/Maximum recovery time/DF_Recovery_focal.rds") %>% 
   mutate(Guild_Crash = "Demersal Fish",
          Level = "Targeted Guild",
@@ -189,6 +189,3 @@ ggsave("../Figures/Transient/Barents_Sea/NM/Draft 1/Figure 5.png",
 ## and if you're happy
 ggsave("./Figures/Figure 5.png",
        dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white")
-
-
-
