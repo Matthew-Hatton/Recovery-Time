@@ -95,8 +95,8 @@ ggsave("../Draft Figures/Transient/Barents_Sea/NM/Draft 2/Driver investigation.p
        bg = "white")
 
 ggsave("./Figures/Figure 6.png",
-       height = 1080,
-       width = 1920,
-       units = "px",
-       dpi = 200,
+       height = 20,
+       width = 35,
+       units = "cm",
+       dpi = 1200,
        bg = "white")
