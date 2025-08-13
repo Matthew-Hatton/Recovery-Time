@@ -74,12 +74,13 @@ ggplot() +
     color = "Constant"
   ) +
   theme_bw() +
-  theme(
-    strip.text = element_text(face = "bold"),
-    strip.background = element_blank(),
-    legend.position = "top",
-    legend.text = element_text(size = 12),
-    axis.text.x = element_text(size = 8),
+  theme(strip.text = element_text(face = "bold",size = 14),
+        strip.background = element_rect(color = "black",fill = NA),
+        legend.position = "top",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
     panel.grid.minor = element_blank()
   ) +
   guides(colour = guide_legend(override.aes = list(size=10))) +

@@ -183,10 +183,12 @@ ggplot(facet, aes(x = Crash_Year, y = Recovery_Time)) +
   guides(color = "none") +
   theme_bw(base_size = 14) +
   labs(x = "Release Year", y = "Recovery Time (Years)") +
-  theme(
-    strip.background = element_rect(color = "black", fill = NA),
-    strip.text = element_text(face = "bold"),
-    legend.position = "top",
+  theme(strip.text = element_text(face = "bold",size = 14),
+        strip.background = element_rect(color = "black",fill = NA),
+        legend.position = "top",
+        legend.text = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
     legend.title = element_blank(),
     panel.grid.minor = element_blank()
   )

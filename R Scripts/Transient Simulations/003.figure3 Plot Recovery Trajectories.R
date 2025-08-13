@@ -26,7 +26,10 @@ interval <- seq(2020,2085,5)
 
 ##### SWITCH #####
 # focal <- "Demersal_fish"
-focal <- "Planktivorous_fish"
+# focal <- "Planktivorous_fish"
+focals <- c("Demersal_fish", "Planktivorous_fish")
+
+main <- function(focal){
 
 if (focal == "Demersal_fish") {
   all <- readRDS("../Objects/Experiments/Rolling Crash/Rolling_Crash_Static_MSY_DemersalV2.RDS")
@@ -197,11 +200,13 @@ non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Ti
   scale_y_continuous(limits = c(0, 60)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
   theme_bw() +
-  theme(strip.text = element_text(face = "bold"),
+  theme(strip.text = element_text(face = "bold",size = 14),
         strip.background = element_rect(color = "black",fill = NA),
         legend.position = "top",
-        legend.text = element_text(size = 12),
-        axis.text.x = element_text(size = 8),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
         panel.grid.minor = element_blank()) +
   color_scale
 
@@ -266,11 +271,11 @@ non_ss_biomass <- ggplot() +
   labs(x = "Release Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m⁻³)"), color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_bw() +
-  theme(strip.text = element_text(face = "bold",size = 12),
+  theme(strip.text = element_text(face = "bold",size = 14),
         strip.background = element_rect(color = "black",fill = NA),
         legend.position = "top",
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
         axis.text = element_text(size = 12),
         axis.title = element_text(size = 14),
         panel.grid.minor = element_blank()) +
@@ -291,3 +296,6 @@ if (focal == "Demersal_fish") {
          dpi = 1200,width = 35,height = 20,unit = "cm",bg = "white") # will need cleaning up for publication
 }
 toc()
+}
+
+map(focals,main)
