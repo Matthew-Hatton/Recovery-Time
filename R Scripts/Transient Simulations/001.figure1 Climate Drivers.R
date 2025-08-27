@@ -5,7 +5,7 @@ rm(list=ls()) # reset
 Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate",
               "sf","rnaturalearth","tictoc","progressr","zoo")    # List packages
 lapply(Packages, library, character.only = TRUE)   
-source("../@_Region_file_BS.R")
+source("./@_Region_file_BS.R")
 
 My_volumes <- readRDS("../Objects/Barents_Sea/NM/TS.rds")
 
