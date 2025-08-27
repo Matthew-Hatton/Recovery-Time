@@ -28,6 +28,45 @@ pfish_summary <- pfish_all_upper %>%
   mutate(Guild_Crash = "Planktivorous Fish",
          Level = "Ecosystem Maximum")
 
+## GUILD RANKINGS - PFISH
+pfish_rankings <- pfish_all_upper %>%
+  group_by(HR, Crash_Year) %>%
+  mutate(Recovery_Time = case_when(
+    is.na(Recovery_Time) ~ 70,
+    TRUE ~ Recovery_Time
+  )) %>% 
+  group_by(Crash_Year,HR,Guild) %>% 
+  slice_max(Recovery_Time,with_ties = F) %>% 
+  arrange(Crash_Year,-Recovery_Time,HR) %>% 
+  split(.,.$HR)
+
+pfish_status_quo <- pfish_rankings[[1]] %>%
+  mutate(HR = recode(HR, '2020s Baseline' = 'Status Quo')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(pfish_status_quo,"../Objects/Supplementary/pfish status quo recovery ranks.csv",row.names = F)
+
+pfish_MSY <- pfish_rankings[[2]] %>%
+  mutate(HR = recode(HR, '2020s MSY' = 'MSY')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(pfish_MSY,"../Objects/Supplementary/pfish MSY recovery ranks.csv",row.names = F)
+
+pfish_over <- pfish_rankings[[3]] %>%
+  mutate(HR = recode(HR, '2020s 2x MSY' = 'Overfishing')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(pfish_over,"../Objects/Supplementary/pfish overfishing recovery ranks.csv",row.names = F)
+
 ## FOCAL - PFISH
 pfish_focal <- readRDS("../Objects/Experiments/Maximum recovery time/PF_Recovery_focal.rds") %>% 
   mutate(Guild_Crash = "Planktivorous Fish",
@@ -48,6 +87,45 @@ dfish_summary <- dfish_all_upper %>%
   ungroup() %>% 
   mutate(Guild_Crash = "Demersal Fish",
          Level = "Ecosystem Maximum")
+
+## GUILD RANKINGS - dfish
+dfish_rankings <- dfish_all_upper %>%
+  group_by(HR, Crash_Year) %>%
+  mutate(Recovery_Time = case_when(
+    is.na(Recovery_Time) ~ 70,
+    TRUE ~ Recovery_Time
+  )) %>% 
+  group_by(Crash_Year,HR,Guild) %>% 
+  slice_max(Recovery_Time,with_ties = F) %>% 
+  arrange(Crash_Year,-Recovery_Time,HR) %>% 
+  split(.,.$HR)
+
+dfish_status_quo <- dfish_rankings[[1]] %>%
+  mutate(HR = recode(HR, '2020s Baseline' = 'Status Quo')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(dfish_status_quo,"../Objects/Supplementary/dfish status quo recovery ranks.csv",row.names = F)
+
+dfish_MSY <- dfish_rankings[[2]] %>%
+  mutate(HR = recode(HR, '2020s MSY' = 'MSY')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(dfish_MSY,"../Objects/Supplementary/dfish MSY recovery ranks.csv",row.names = F)
+
+dfish_over <- dfish_rankings[[3]] %>%
+  mutate(HR = recode(HR, '2020s 2x MSY' = 'Overfishing')) %>%
+  group_by(HR, Crash_Year) %>%
+  arrange(desc(Recovery_Time), .by_group = TRUE) %>%
+  mutate(Recovery_Rank = row_number()) %>%
+  ungroup() %>%
+  select(HR, Crash_Year, Guild, Recovery_Rank)
+write.csv(dfish_over,"../Objects/Supplementary/dfish overfishing recovery ranks.csv",row.names = F)
 
 ## FOCAL - DFISH
 dfish_focal <- readRDS("../Objects/Experiments/Maximum recovery time/DF_Recovery_focal.rds") %>% 
