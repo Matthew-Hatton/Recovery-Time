@@ -51,13 +51,19 @@ for (i in seq_along(pf)) {
   master_PF <- rbind(master_PF,pf_df)
 }
 
-master <- rbind(master_DF,master_PF)
+master <- rbind(master_DF, master_PF) %>%
+  mutate(hold = as.character(hold)) %>%
+  mutate(hold = case_when(
+    hold == "Boundary" ~ "Nitrogen\nConcentrations",
+    TRUE ~ hold
+  ))
+
 baseline <- rbind(baseline_non_ss_DF,baseline_non_ss_PF)
 
 # Define custom colors
 my_colors <- c(
   "Flows" = "#132280",  # deep purple
-  "Boundary" = "#117733",  # green
+  "Nitrogen\nConcentrations" = "#117733",  # green
   "Light" = "#DDCC77",  # sand/yellow
   "Temperature" = "#CC6677",  # reddish pink
   "Ice" = "#88CCEE"   # sky blue
