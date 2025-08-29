@@ -51,17 +51,29 @@ guilds <- c( # switch on what you want
             NULL
             )
 
+## baselines
+baseline_df <- unique(biomass_Dfish[, c("year", "Guild", "baseline_non_ss")])
+crash_hr_df <- unique(biomass_Dfish[, c("Crash_Year", "HR", "HR_num")]) # pull uniques
+baseline_df <- merge(baseline_df, crash_hr_df, by = NULL)
+
+baseline_pf <- unique(biomass_Pfish[, c("year", "Guild", "baseline_non_ss")])
+crash_hr_pf <- unique(biomass_Pfish[, c("Crash_Year", "HR", "HR_num")]) # pull uniques
+baseline_pf <- merge(baseline_pf, crash_hr_pf, by = NULL)
+
 for (i in guilds) {
   # i = guilds[[8]] # debug
   message(paste0(i,"\n"))
   tmp_Dfish <- filter(biomass_Dfish,Guild == i)
+  tmp_Dfish_baseline <- baseline_df %>% filter(Guild == i)
+
   tmp_Pfish <- filter(biomass_Pfish,Guild == i)
+  tmp_Pfish_baseline <- baseline_pf %>% filter(Guild == i)
   
   dfish <- ggplot() +
     geom_line(data = tmp_Dfish,aes(x = year,y = Biomass,color = as.character(HR))) +
-    geom_line(data = tmp_Dfish,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
+    geom_line(data = tmp_Dfish_baseline,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
     geom_ribbon(
-      data = tmp_Dfish,
+      data = tmp_Dfish_baseline,
       aes(x = year, y = baseline_non_ss, ymin = baseline_non_ss - (baseline_non_ss * 0.2), ymax = baseline_non_ss), alpha = 0.1) +
     facet_wrap(~Crash_Year) +
     labs(title = paste0(i),x = "Year",y = "Biomass",color = "HR") +
@@ -78,9 +90,9 @@ for (i in guilds) {
   
   pfish <- ggplot() +
     geom_line(data = tmp_Pfish,aes(x = year,y = Biomass,color = as.character(HR))) +
-    geom_line(data = tmp_Pfish,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
+    geom_line(data = tmp_Pfish_baseline,aes(x = year,y = baseline_non_ss),alpha = 0.6,color = "black") +
     geom_ribbon(
-      data = tmp_Dfish,
+      data = tmp_Pfish_baseline,
       aes(x = year, y = baseline_non_ss, ymin = baseline_non_ss - (baseline_non_ss * 0.2), ymax = baseline_non_ss), alpha = 0.1) +
     facet_wrap(~Crash_Year) +
     labs(title = paste0(i),x = "Year",y = "Biomass",color = "HR") +
