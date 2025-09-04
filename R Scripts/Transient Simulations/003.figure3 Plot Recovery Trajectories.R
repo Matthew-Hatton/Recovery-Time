@@ -170,7 +170,7 @@ non_ss_biomass <- ggplot() +
     data = baseline_non_ss_df,
     aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
   facet_wrap(~ Crash_Year, ncol = 3, scales = "free_x", strip.position = "top") +
-  labs(x = "Release Year", y = "Planktivorous Fish Biomass (N mmol⋅m¯³)", color = "Harvest Rate") +
+  labs(x = "Year", y = "Planktivorous Fish Biomass (N mmol⋅m¯³)", color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_bw() +
   theme(strip.text = element_text(face = "bold"),
@@ -195,7 +195,7 @@ non_ss_recovery <- ggplot(recovery_baseline, aes(x = Crash_Year, y = Recovery_Ti
   geom_line(linewidth = 1, alpha = 1) +
   geom_point(size = 2, alpha = 1) +
   geom_hline(yintercept = 20, linetype = "dashed") +
-  labs(x = "Release Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
+  labs(x = "Year", y = "Recovery Time (Years)", color = "Harvest Rate") +
   facet_wrap(~Guild,strip.position = "top") +
   scale_y_continuous(limits = c(0, 60)) +
   scale_fill_discrete(breaks=c('Baseline', 'MSY','2x MSY')) +
@@ -268,7 +268,7 @@ non_ss_biomass <- ggplot() +
     aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
   geom_segment(data = recovery_lines,aes(x = Recovery_Year,xend = Recovery_Year,y = 0,yend = biomass_at_recovery,color = HR),linetype = "dashed",show.legend = F) +
   ggh4x::facet_grid2(Crash_Year ~ Guild, scales = "free", independent = "all") +
-  labs(x = "Release Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m⁻³)"), color = "Harvest Rate") +
+  labs(x = "Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m⁻³)"), color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_bw() +
   theme(strip.text = element_text(face = "bold",size = 14),
