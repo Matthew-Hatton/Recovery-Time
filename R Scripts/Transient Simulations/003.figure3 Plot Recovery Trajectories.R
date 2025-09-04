@@ -224,7 +224,13 @@ if (focal == "Demersal_fish") {
 
 ################################# FIGURE 4 #################################
 
-master <- master %>% filter(Crash_Year %in% c(2020,2050,2080))
+master <- master %>% filter(Crash_Year %in% c(2020,2050,2080)) %>% 
+  mutate(Crash_Year_Label = Crash_Year) %>% 
+  mutate(Crash_Year_Label = case_when(
+    Crash_Year_Label == 2020 ~ "Fishing Pressure Released in 2020",
+    Crash_Year_Label == 2050 ~ "Fishing Pressure Released in 2050",
+    Crash_Year_Label == 2080 ~ "Fishing Pressure Released in 2080"
+  ))
 
 ## Mark recovery Lines
 if (focal == "Demersal_fish") {
@@ -267,11 +273,11 @@ non_ss_biomass <- ggplot() +
     data = baseline_non_ss_df,
     aes(x = year, y = baseline, ymin = baseline - (baseline * 0.2), ymax = baseline), alpha = 0.1) +
   geom_segment(data = recovery_lines,aes(x = Recovery_Year,xend = Recovery_Year,y = 0,yend = biomass_at_recovery,color = HR),linetype = "dashed",show.legend = F) +
-  ggh4x::facet_grid2(Crash_Year ~ Guild, scales = "free", independent = "all") +
+  ggh4x::facet_grid2(Crash_Year_Label ~ Guild, scales = "free", independent = "all") +
   labs(x = "Year", y = paste0(master$Guild[1]," Biomass (N mmol⋅m⁻³)"), color = "Harvest Rate") +
   scale_x_continuous(limits = c(2020,2099)) +
   theme_bw() +
-  theme(strip.text = element_text(face = "bold",size = 14),
+  theme(strip.text = element_text(face = "bold",size = 8),
         strip.background = element_rect(color = "black",fill = NA),
         legend.position = "top",
         legend.title = element_text(size = 14),
