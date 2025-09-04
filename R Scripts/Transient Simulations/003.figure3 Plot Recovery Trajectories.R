@@ -243,6 +243,9 @@ if (focal == "Demersal_fish") {
                                Crash_Year = c(2020,2020,2020,
                                               2050,2050,2050,
                                               2080,2080,2080),
+                               Crash_Year_Label = c("Fishing Pressure Released in 2020","Fishing Pressure Released in 2020","Fishing Pressure Released in 2020",
+                                                    "Fishing Pressure Released in 2050","Fishing Pressure Released in 2050","Fishing Pressure Released in 2050",
+                                                    "Fishing Pressure Released in 2080","Fishing Pressure Released in 2080","Fishing Pressure Released in 2080"),
                                HR = c("Status Quo","MSY","Overfishing",
                                       "Status Quo","MSY","Overfishing",
                                       "Status Quo","MSY","Overfishing"))
@@ -257,6 +260,9 @@ if (focal == "Demersal_fish") {
                                Crash_Year = c(2020,2020,2020,
                                               2050,2050,2050,
                                               2080,2080,2080),
+                               Crash_Year_Label = c("Fishing Pressure Released in 2020","Fishing Pressure Released in 2020","Fishing Pressure Released in 2020",
+                                                    "Fishing Pressure Released in 2050","Fishing Pressure Released in 2050","Fishing Pressure Released in 2050",
+                                                    "Fishing Pressure Released in 2080","Fishing Pressure Released in 2080","Fishing Pressure Released in 2080"),
                                HR = c("Status Quo","MSY","Overfishing",
                                       "Status Quo","MSY","Overfishing",
                                       "Status Quo","MSY","Overfishing"))
